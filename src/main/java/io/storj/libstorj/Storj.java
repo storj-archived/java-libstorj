@@ -27,9 +27,9 @@ public class Storj {
 
     private static final String DEFAULT_HOST = "api.storj.io";
 
-    public static String appDir;
-
     private static Storj instance;
+    private static java.io.File configDir;
+    private static java.io.File downloadDir;
 
     private String host;
     private Keys keys;
@@ -44,6 +44,14 @@ public class Storj {
             instance = new Storj();
         }
         return instance;
+    }
+
+    public static void setConfigDirectory(java.io.File dir) {
+        configDir = dir;
+    }
+
+    public static void setDownloadDirectory(java.io.File dir) {
+        downloadDir = dir;
     }
 
     public static native long getTimestamp();
@@ -153,10 +161,9 @@ public class Storj {
     }
 
     public void downloadFile(Bucket bucket, File file, DownloadFileCallback callback) throws KeysNotFoundException {
+        checkDownloadDir();
         checkKeys();
-//      TODO  java.io.File downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-        java.io.File downloads = new java.io.File(System.getProperty("user.home"), "Storj");
-        String path = new java.io.File(downloads, file.getName()).getPath();
+        String path = new java.io.File(downloadDir, file.getName()).getPath();
         _downloadFile(bucket.getId(), file, path, keys.getUser(), keys.getPass(), keys.getMnemonic(), callback);
     }
 
@@ -165,11 +172,17 @@ public class Storj {
         _uploadFile(bucket.getId(), filePath, keys.getUser(), keys.getPass(), keys.getMnemonic(), callback);
     }
 
-    private java.io.File getAuthFile() {
-        if (appDir == null) {
+    private java.io.File getAuthFile() throws IllegalStateException {
+        if (configDir == null) {
             throw new IllegalStateException("appDir is not set");
         }
-        return new java.io.File(appDir, host + ".json");
+        return new java.io.File(configDir, host + ".json");
+    }
+
+    private void checkDownloadDir() throws IllegalStateException {
+        if (downloadDir == null) {
+            throw new IllegalStateException("Download directory is not set");
+        }
     }
 
     private void checkKeys() throws KeysNotFoundException {
