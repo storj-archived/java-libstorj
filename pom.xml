@@ -61,4 +61,11 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+  
+  <distributionManagement>
+    <repository>
+      <id>bintray</id>
+      <url>https://api.bintray.com/maven/kaloyan-raev/maven/libstorj-java/;publish=1</url>
+    </repository>
+  </distributionManagement>
 </project>
