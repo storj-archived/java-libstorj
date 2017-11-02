@@ -684,11 +684,12 @@ static void upload_file_complete_callback(int status, char *file_id, void *handl
         jclass callbackClass = env->GetObjectClass(callbackObject);
         jmethodID callbackMethod = env->GetMethodID(callbackClass,
                                                     "onComplete",
-                                                    "(Ljava/lang/String;)V");
+                                                    "(Ljava/lang/String;Ljava/lang/String;)V");
 
         env->CallVoidMethod(callbackObject,
                             callbackMethod,
-                            cb_extension->filePath);
+                            cb_extension->filePath,
+                            env->NewStringUTF(file_id));
     }
 
     free(file_id);

@@ -20,7 +20,7 @@ public interface UploadFileCallback {
 
     void onProgress(String filePath, double progress, long uploadedBytes, long totalBytes);
 
-    void onComplete(String filePath);
+    void onComplete(String filePath, String fileId);
 
     void onError(String filePath, String message);
 
