@@ -18,7 +18,7 @@ package io.storj.libstorj;
 
 public interface GetBucketCallback {
 
-    void onBucketReceived(Bucket buckets);
+    void onBucketReceived(Bucket bucket);
 
     void onError(String message);
 
