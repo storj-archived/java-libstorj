@@ -695,6 +695,38 @@ static void upload_file_complete_callback(int status, char *file_id, void *handl
     free(file_id);
 }
 
+static const char *get_filename(const char *file_path)
+{
+    const char *file_name = NULL;
+#ifdef _WIN32
+    file_name = strrchr(file_path, '\\');
+    if (!file_name) {
+        file_name = strrchr(file_path, '/');
+    }
+    if (!file_name && file_path) {
+        file_name = file_path;
+    }
+    if (!file_name) {
+        return NULL;
+    }
+    if (file_name[0] == '\\' || file_name[0] == '/') {
+        file_name++;
+    }
+#else
+    file_name = strrchr(file_path, '/');
+    if (!file_name && file_path) {
+        file_name = file_path;
+    }
+    if (!file_name) {
+        return NULL;
+    }
+    if (file_name[0] == '/') {
+        file_name++;
+    }
+#endif
+    return file_name;
+}
+
 static int upload_file(
         FILE *fd,
         const char *bucket_id,
@@ -702,14 +734,6 @@ static int upload_file(
         storj_env_t *storj_env,
         void *handle)
 {
-    const char *file_name = strrchr(file_path, '/');;
-    if (!file_name) {
-        file_name = file_path;
-    }
-    if (file_name[0] == '/') {
-        file_name++;
-    }
-
     storj_upload_opts_t upload_opts = {
             .prepare_frame_limit = 1,
             .push_frame_limit = 64,
@@ -717,7 +741,7 @@ static int upload_file(
             .rs = true,
             .index = NULL,
             .bucket_id = bucket_id,
-            .file_name = file_name,
+            .file_name = get_filename(file_path),
             .fd = fd
     };
 
