@@ -16,6 +16,9 @@
  */
 package io.storj.libstorj;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.CountDownLatch;
 
 public class Storj {
@@ -28,8 +31,8 @@ public class Storj {
     private static final String DEFAULT_HOST = "api.storj.io";
 
     private static Storj instance;
-    private static java.io.File configDir;
-    private static java.io.File downloadDir;
+    private static Path configDir;
+    private static Path downloadDir;
 
     private String host;
     private Keys keys;
@@ -46,11 +49,11 @@ public class Storj {
         return instance;
     }
 
-    public static void setConfigDirectory(java.io.File dir) {
+    public static void setConfigDirectory(Path dir) {
         configDir = dir;
     }
 
-    public static void setDownloadDirectory(java.io.File dir) {
+    public static void setDownloadDirectory(Path dir) {
         downloadDir = dir;
     }
 
@@ -69,12 +72,12 @@ public class Storj {
     }
 
     public boolean keysExist() {
-        return getAuthFile().exists();
+        return Files.exists(getAuthFile());
     }
 
     public Keys getKeys(String passphrase) {
         if (keys == null) {
-            keys = _exportKeys(getAuthFile().getPath(), passphrase);
+            keys = _exportKeys(getAuthFile().toString(), passphrase);
         }
         return keys;
     }
@@ -86,15 +89,16 @@ public class Storj {
      * @return <code>true</code> if importing keys was successful, <code>false</code> otherwise
      */
     public boolean importKeys(Keys keys, String passphrase) {
-        boolean success = _writeAuthFile(getAuthFile().getPath(), keys.getUser(), keys.getPass(), keys.getMnemonic(), passphrase);
+        boolean success = _writeAuthFile(getAuthFile().toString(), keys.getUser(), keys.getPass(), keys.getMnemonic(),
+                passphrase);
         if (success) {
             this.keys = keys;
         }
         return success;
     }
 
-    public boolean deleteKeys() {
-        boolean success = getAuthFile().delete();
+    public boolean deleteKeys() throws IOException {
+        boolean success = Files.deleteIfExists(getAuthFile());
         if (success) {
             keys = null;
         }
@@ -163,7 +167,7 @@ public class Storj {
     public void downloadFile(Bucket bucket, File file, DownloadFileCallback callback) throws KeysNotFoundException {
         checkDownloadDir();
         checkKeys();
-        String path = new java.io.File(downloadDir, file.getName()).getPath();
+        String path = downloadDir.resolve(file.getName()).toString();
         _downloadFile(bucket.getId(), file, path, keys.getUser(), keys.getPass(), keys.getMnemonic(), callback);
     }
 
@@ -172,11 +176,11 @@ public class Storj {
         _uploadFile(bucket.getId(), filePath, keys.getUser(), keys.getPass(), keys.getMnemonic(), callback);
     }
 
-    private java.io.File getAuthFile() throws IllegalStateException {
+    private Path getAuthFile() throws IllegalStateException {
         if (configDir == null) {
             throw new IllegalStateException("appDir is not set");
         }
-        return new java.io.File(configDir, host + ".json");
+        return configDir.resolve(host + ".json");
     }
 
     private void checkDownloadDir() throws IllegalStateException {
