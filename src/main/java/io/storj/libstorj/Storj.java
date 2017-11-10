@@ -23,8 +23,15 @@ import java.util.concurrent.CountDownLatch;
 
 public class Storj {
 
-    // Used to load the 'storj-java' library on application startup.
     static {
+        loadLibrary();
+    }
+
+    /**
+     * We need this in a separate method, so it can be mocked by JMockit and make
+     * tests independent of native libraries.
+     */
+    private static void loadLibrary() {
         System.loadLibrary("storj-java");
     }
 
