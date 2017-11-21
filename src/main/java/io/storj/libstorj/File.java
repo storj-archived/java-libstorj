@@ -20,6 +20,7 @@ import java.io.Serializable;
 import java.net.URLConnection;
 import java.util.Objects;
 
+@SuppressWarnings("serial")
 public class File implements Serializable, Comparable<File> {
 
     private String id;

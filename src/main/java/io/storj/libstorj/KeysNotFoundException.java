@@ -16,5 +16,6 @@
  */
 package io.storj.libstorj;
 
+@SuppressWarnings("serial")
 public class KeysNotFoundException extends RuntimeException {
 }

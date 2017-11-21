@@ -19,6 +19,7 @@ package io.storj.libstorj;
 import java.io.Serializable;
 import java.util.Objects;
 
+@SuppressWarnings("serial")
 public class Bucket implements Serializable, Comparable<Bucket> {
 
     private String id;
