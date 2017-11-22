@@ -161,7 +161,6 @@ static void get_buckets_callback(uv_work_t *work_req, int status)
         env->CallVoidMethod(callbackObject, callbackMethod, bucketArray);
     }
 
-    json_object_put(req->response);
     storj_free_get_buckets_request(req);
     free(work_req);
 }
@@ -244,7 +243,6 @@ static void get_bucket_callback(uv_work_t *work_req, int status)
         env->CallVoidMethod(callbackObject, callbackMethod, bucketObject);
     }
 
-    json_object_put(req->response);
     storj_free_get_bucket_request(req);
     free(work_req);
 }
@@ -453,7 +451,6 @@ static void list_files_callback(uv_work_t *work_req, int status)
         env->CallVoidMethod(callbackObject, callbackMethod, fileArray);
     }
 
-    json_object_put(req->response);
     storj_free_list_files_request(req);
     free(work_req);
 }
