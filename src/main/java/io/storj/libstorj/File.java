@@ -95,6 +95,10 @@ public class File implements Serializable, Comparable<File> {
         return hmac;
     }
 
+    public boolean isDirectory() {
+        return name.endsWith("/");
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(id);
