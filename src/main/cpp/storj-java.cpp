@@ -692,42 +692,10 @@ static void upload_file_complete_callback(int status, char *file_id, void *handl
     free(file_id);
 }
 
-static const char *get_filename(const char *file_path)
-{
-    const char *file_name = NULL;
-#ifdef _WIN32
-    file_name = strrchr(file_path, '\\');
-    if (!file_name) {
-        file_name = strrchr(file_path, '/');
-    }
-    if (!file_name && file_path) {
-        file_name = file_path;
-    }
-    if (!file_name) {
-        return NULL;
-    }
-    if (file_name[0] == '\\' || file_name[0] == '/') {
-        file_name++;
-    }
-#else
-    file_name = strrchr(file_path, '/');
-    if (!file_name && file_path) {
-        file_name = file_path;
-    }
-    if (!file_name) {
-        return NULL;
-    }
-    if (file_name[0] == '/') {
-        file_name++;
-    }
-#endif
-    return file_name;
-}
-
 static int upload_file(
         FILE *fd,
         const char *bucket_id,
-        const char *file_path,
+        const char *file_name,
         storj_env_t *storj_env,
         void *handle)
 {
@@ -738,7 +706,7 @@ static int upload_file(
             .rs = true,
             .index = NULL,
             .bucket_id = bucket_id,
-            .file_name = get_filename(file_path),
+            .file_name = file_name,
             .fd = fd
     };
 
@@ -767,13 +735,15 @@ Java_io_storj_libstorj_Storj__1uploadFile(
         JNIEnv *env,
         jobject /* instance */,
         jstring bucketId_,
-        jstring filePath_,
+        jstring fileName_,
+        jstring localPath_,
         jstring user_,
         jstring pass_,
         jstring mnemonic_,
         jobject callbackObject) {
     const char *bucket_id = env->GetStringUTFChars(bucketId_, NULL);
-    const char *file_path = env->GetStringUTFChars(filePath_, NULL);
+    const char *file_name = env->GetStringUTFChars(fileName_, NULL);
+    const char *local_path = env->GetStringUTFChars(localPath_, NULL);
     const char *user = env->GetStringUTFChars(user_, NULL);
     const char *pass = env->GetStringUTFChars(pass_, NULL);
     const char *mnemonic = env->GetStringUTFChars(mnemonic_, NULL);
@@ -781,7 +751,7 @@ Java_io_storj_libstorj_Storj__1uploadFile(
     storj_env_t *storj_env = init_env(env, callbackObject, user, pass, mnemonic);
 
     if (!storj_env) {
-        error_callback(env, callbackObject, filePath_, INIT_ENV_ERROR);
+        error_callback(env, callbackObject, localPath_, INIT_ENV_ERROR);
     } else {
         jcallback_t jcallback = {
                 .env = env,
@@ -790,15 +760,15 @@ Java_io_storj_libstorj_Storj__1uploadFile(
 
         jupload_callback_t cb_extension = {
                 .base = jcallback,
-                .filePath = filePath_
+                .filePath = localPath_
         };
 
-        FILE *fd = fopen(file_path, "r");
+        FILE *fd = fopen(local_path, "r");
 
         if (!fd) {
-            error_callback(env, callbackObject, filePath_, "Can't read file");
-        } else if (upload_file(fd, bucket_id, file_path, storj_env, &cb_extension)) {
-            error_callback(env, callbackObject, filePath_, "Can't allocate memory");
+            error_callback(env, callbackObject, localPath_, "Can't read file");
+        } else if (upload_file(fd, bucket_id, file_name, storj_env, &cb_extension)) {
+            error_callback(env, callbackObject, localPath_, "Can't allocate memory");
         } else {
             uv_run(storj_env->loop, UV_RUN_DEFAULT);
         }
@@ -807,7 +777,8 @@ Java_io_storj_libstorj_Storj__1uploadFile(
     }
 
     env->ReleaseStringUTFChars(bucketId_, bucket_id);
-    env->ReleaseStringUTFChars(filePath_, file_path);
+    env->ReleaseStringUTFChars(fileName_, file_name);
+    env->ReleaseStringUTFChars(localPath_, local_path);
     env->ReleaseStringUTFChars(user_, user);
     env->ReleaseStringUTFChars(pass_, pass);
     env->ReleaseStringUTFChars(mnemonic_, mnemonic);

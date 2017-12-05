@@ -178,9 +178,13 @@ public class Storj {
         _downloadFile(bucket.getId(), file, path, keys.getUser(), keys.getPass(), keys.getMnemonic(), callback);
     }
 
-    public void uploadFile(Bucket bucket, String filePath, UploadFileCallback callback) throws KeysNotFoundException {
+    public void uploadFile(Bucket bucket, Path localPath, UploadFileCallback callback) throws KeysNotFoundException {
+        uploadFile(bucket, localPath.getFileName().toString(), localPath, callback);
+    }
+
+    public void uploadFile(Bucket bucket, String fileName, Path localPath, UploadFileCallback callback) throws KeysNotFoundException {
         checkKeys();
-        _uploadFile(bucket.getId(), filePath, keys.getUser(), keys.getPass(), keys.getMnemonic(), callback);
+        _uploadFile(bucket.getId(), fileName, localPath.toAbsolutePath().toString(), keys.getUser(), keys.getPass(), keys.getMnemonic(), callback);
     }
 
     private Path getAuthFile() throws IllegalStateException {
@@ -224,6 +228,6 @@ public class Storj {
 
     private native void _downloadFile(String bucketId, File file, String path, String user, String pass, String mnemonic, DownloadFileCallback callback);
 
-    private native void _uploadFile(String bucketId, String filePath, String user, String pass, String mnemonic, UploadFileCallback callback);
+    private native void _uploadFile(String bucketId, String fileName, String localPath, String user, String pass, String mnemonic, UploadFileCallback callback);
 
 }
