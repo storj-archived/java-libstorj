@@ -24,6 +24,8 @@
 #include <direct.h>
 #endif
 
+#define JAVA_LIBSTORJ_VERSION "java-libstorj-0.5"
+
 #define INIT_ENV_ERROR "Failed to initialize Storj environment"
 
 typedef struct {
@@ -82,7 +84,7 @@ static storj_env_t *init_env(
         const char *mnemonic)
 {
     storj_http_options_t http_options = {
-            .user_agent = "Hello Storj",
+            .user_agent = JAVA_LIBSTORJ_VERSION,
             .proxy_url = NULL,
             .cainfo_path = getenv("STORJ_CAINFO"),
             .low_speed_limit = STORJ_LOW_SPEED_LIMIT,
