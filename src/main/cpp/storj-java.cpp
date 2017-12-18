@@ -77,8 +77,6 @@ static void error_callback(JNIEnv *env, jobject callbackObject, jobject file, co
 }
 
 static storj_env_t *init_env(
-        JNIEnv *env,
-        jobject callbackObject,
         const char *user,
         const char *pass,
         const char *mnemonic)
@@ -180,7 +178,7 @@ Java_io_storj_libstorj_Storj__1getBuckets(
     const char *pass = env->GetStringUTFChars(pass_, NULL);
     const char *mnemonic = env->GetStringUTFChars(mnemonic_, NULL);
 
-    storj_env_t *storj_env = init_env(env, callbackObject, user, pass, mnemonic);
+    storj_env_t *storj_env = init_env(user, pass, mnemonic);
 
     if (!storj_env) {
         error_callback(env, callbackObject, INIT_ENV_ERROR);
@@ -264,7 +262,7 @@ Java_io_storj_libstorj_Storj__1getBucket(
     const char *mnemonic = env->GetStringUTFChars(mnemonic_, NULL);
     const char *bucket_id = env->GetStringUTFChars(bucketId_, NULL);
 
-    storj_env_t *storj_env = init_env(env, callbackObject, user, pass, mnemonic);
+    storj_env_t *storj_env = init_env(user, pass, mnemonic);
 
     if (!storj_env) {
         error_callback(env, callbackObject, INIT_ENV_ERROR);
@@ -349,7 +347,7 @@ Java_io_storj_libstorj_Storj__1createBucket(
     const char *mnemonic = env->GetStringUTFChars(mnemonic_, NULL);
     const char *bucketName = env->GetStringUTFChars(bucketName_, NULL);
 
-    storj_env_t *storj_env = init_env(env, callbackObject, user, pass, mnemonic);
+    storj_env_t *storj_env = init_env(user, pass, mnemonic);
 
     if (!storj_env) {
         error_callback(env, callbackObject, INIT_ENV_ERROR);
@@ -472,7 +470,7 @@ Java_io_storj_libstorj_Storj__1listFiles(
     const char *mnemonic = env->GetStringUTFChars(mnemonic_, NULL);
     const char *bucketId = env->GetStringUTFChars(bucketId_, NULL);
 
-    storj_env_t *storj_env = init_env(env, callbackObject, user, pass, mnemonic);
+    storj_env_t *storj_env = init_env(user, pass, mnemonic);
 
     if (!storj_env) {
         error_callback(env, callbackObject, INIT_ENV_ERROR);
@@ -596,7 +594,7 @@ Java_io_storj_libstorj_Storj__1downloadFile(
     const char *pass = env->GetStringUTFChars(pass_, NULL);
     const char *mnemonic = env->GetStringUTFChars(mnemonic_, NULL);
 
-    storj_env_t *storj_env = init_env(env, callbackObject, user, pass, mnemonic);
+    storj_env_t *storj_env = init_env(user, pass, mnemonic);
 
     if (!storj_env) {
         error_callback(env, callbackObject, file_, INIT_ENV_ERROR);
@@ -750,7 +748,7 @@ Java_io_storj_libstorj_Storj__1uploadFile(
     const char *pass = env->GetStringUTFChars(pass_, NULL);
     const char *mnemonic = env->GetStringUTFChars(mnemonic_, NULL);
 
-    storj_env_t *storj_env = init_env(env, callbackObject, user, pass, mnemonic);
+    storj_env_t *storj_env = init_env(user, pass, mnemonic);
 
     if (!storj_env) {
         error_callback(env, callbackObject, localPath_, INIT_ENV_ERROR);
@@ -829,7 +827,7 @@ Java_io_storj_libstorj_Storj__1deleteBucket(
     const char *mnemonic = env->GetStringUTFChars(mnemonic_, NULL);
     const char *bucket_id = env->GetStringUTFChars(bucketId_, NULL);
 
-    storj_env_t *storj_env = init_env(env, callbackObject, user, pass, NULL);
+    storj_env_t *storj_env = init_env(user, pass, NULL);
 
     if (!storj_env) {
         error_callback(env, callbackObject, INIT_ENV_ERROR);
@@ -896,7 +894,7 @@ Java_io_storj_libstorj_Storj__1deleteFile(
     const char *bucket_id = env->GetStringUTFChars(bucketId_, NULL);
     const char *file_id = env->GetStringUTFChars(fileId_, NULL);
 
-    storj_env_t *storj_env = init_env(env, callbackObject, user, pass, NULL);
+    storj_env_t *storj_env = init_env(user, pass, NULL);
 
     if (!storj_env) {
         error_callback(env, callbackObject, INIT_ENV_ERROR);
@@ -966,7 +964,7 @@ Java_io_storj_libstorj_Storj__1register(
     const char *user = env->GetStringUTFChars(user_, NULL);
     const char *pass = env->GetStringUTFChars(pass_, NULL);
 
-    storj_env_t *storj_env = init_env(env, callbackObject, user, pass, NULL);
+    storj_env_t *storj_env = init_env(user, pass, NULL);
 
     if (!storj_env) {
         error_callback(env, callbackObject, INIT_ENV_ERROR);
@@ -1038,7 +1036,7 @@ Java_io_storj_libstorj_Storj__1getInfo(
         JNIEnv *env,
         jobject /* instance */,
         jobject callbackObject) {
-    storj_env_t *storj_env = init_env(env, callbackObject, NULL, NULL, NULL);
+    storj_env_t *storj_env = init_env(NULL, NULL, NULL);
 
     if (!storj_env) {
         error_callback(env, callbackObject, INIT_ENV_ERROR);
