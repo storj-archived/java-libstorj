@@ -215,9 +215,14 @@ public class Storj {
 
     public void downloadFile(Bucket bucket, File file, DownloadFileCallback callback) throws KeysNotFoundException {
         checkDownloadDir();
+        Path localPath = downloadDir.resolve(file.getName());
+        downloadFile(bucket, file, localPath, callback);
+    }
+
+    public void downloadFile(Bucket bucket, File file, Path localPath, DownloadFileCallback callback)
+            throws KeysNotFoundException {
         checkKeys();
-        String path = downloadDir.resolve(file.getName()).toString();
-        _downloadFile(new Environment(), bucket.getId(), file, path, callback);
+        _downloadFile(new Environment(), bucket.getId(), file, localPath.toString(), callback);
     }
 
     public void uploadFile(Bucket bucket, Path localPath, UploadFileCallback callback) throws KeysNotFoundException {
@@ -226,7 +231,7 @@ public class Storj {
 
     public void uploadFile(Bucket bucket, String fileName, Path localPath, UploadFileCallback callback) throws KeysNotFoundException {
         checkKeys();
-        _uploadFile(new Environment(), bucket.getId(), fileName, localPath.toAbsolutePath().toString(), callback);
+        _uploadFile(new Environment(), bucket.getId(), fileName, localPath.toString(), callback);
     }
 
     private Path getAuthFile() throws IllegalStateException {
