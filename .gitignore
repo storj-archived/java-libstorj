@@ -13,3 +13,6 @@ buildNumber.properties
 /.project
 /.classpath
 /.settings/
+
+# Crash logs
+hs*.log
