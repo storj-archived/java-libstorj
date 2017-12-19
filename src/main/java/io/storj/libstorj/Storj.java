@@ -22,10 +22,24 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
 public class Storj {
+
+    private static final String DEFAULT_PROTO = "https";
+    private static final String DEFAULT_HOST = "api.storj.io";
+    private static final int DEFAULT_PORT = 443;
+
+    private static String USER_AGENT;
+
+    private String proto;
+    private String host;
+    private int port;
+    private Keys keys;
+    private Path configDir;
+    private Path downloadDir;
 
     static {
         loadLibrary();
@@ -61,55 +75,35 @@ public class Storj {
         return null;
     }
 
-    private static final String DEFAULT_PROTO = "https";
-    private static final String DEFAULT_HOST = "api.storj.io";
-    private static final int DEFAULT_PORT = 443;
-
-    private static String USER_AGENT;
-
-    private static Storj instance;
-    private static Path configDir;
-    private static Path downloadDir;
-
-    private String proto;
-    private String host;
-    private int port;
-    private Keys keys;
-
-    private Storj() {
-        proto = DEFAULT_PROTO;
-        host = DEFAULT_HOST;
-        port = DEFAULT_PORT;
-        keys = null;
+    public Storj() {
+        this(DEFAULT_PROTO, DEFAULT_HOST, DEFAULT_PORT);
     }
 
-    public static Storj getInstance() {
-        if (instance == null) {
-            instance = new Storj();
-        }
-        return instance;
+    public Storj(String bridgeUrl) throws MalformedURLException {
+        this(new URL(bridgeUrl));
     }
 
-    public static void setConfigDirectory(Path dir) {
+    public Storj(URL bridgeUrl) {
+        this(bridgeUrl.getProtocol(), bridgeUrl.getHost(), bridgeUrl.getPort());
+    }
+
+    private Storj(String bridgeProtocol, String bridgeHost, int bridgePort) {
+        proto = bridgeProtocol;
+        host = bridgeHost;
+        port = bridgePort;
+
+        configDir = Paths.get(System.getProperty("user.home")).resolve(".storj");
+        downloadDir = Paths.get(System.getProperty("user.dir"));
+    }
+
+    public Storj setConfigDirectory(Path dir) {
         configDir = dir;
+        return this;
     }
 
-    public static void setDownloadDirectory(Path dir) {
+    public Storj setDownloadDirectory(Path dir) {
         downloadDir = dir;
-    }
-
-    public void setBridgeEndpoint(String proto, String host, int port) {
-        this.proto = proto;
-        this.host = host;
-        this.port = port;
-    }
-
-    public void setBridgeEndpoint(URL url) {
-        setBridgeEndpoint(url.getProtocol(), url.getHost(), url.getPort());
-    }
-
-    public void setBridgeEndpoint(String url) throws MalformedURLException {
-        setBridgeEndpoint(new URL(url));
+        return this;
     }
 
     public static native long getTimestamp();
@@ -308,19 +302,19 @@ public class Storj {
         }
 
         private Environment(Keys keys) {
-            this.proto = Storj.this.proto;
-            this.host = Storj.this.host;
-            this.port = Storj.this.port;
+            proto = Storj.this.proto;
+            host = Storj.this.host;
+            port = Storj.this.port;
 
             if (keys != null) {
-                this.user = keys.getUser();
-                this.pass = keys.getPass();
-                this.mnemonic = keys.getMnemonic();
+                user = keys.getUser();
+                pass = keys.getPass();
+                mnemonic = keys.getMnemonic();
             }
 
-            this.userAgent = USER_AGENT;
-            this.proxyUrl = null; // TODO
-            this.caInfoPath = System.getenv("STORJ_CAINFO"); // TODO
+            userAgent = USER_AGENT;
+            proxyUrl = null; // TODO
+            caInfoPath = System.getenv("STORJ_CAINFO"); // TODO
         }
 
     }

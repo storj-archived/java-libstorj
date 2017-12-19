@@ -14,11 +14,8 @@ public class StorjTest {
 
     @Before
     public void setup() throws MalformedURLException {
-        Storj.setConfigDirectory(Paths.get("/home/kraev/.storj"));
-        Storj.setDownloadDirectory(Paths.get("/tmp"));
-        storj = Storj.getInstance();
-        storj.setBridgeEndpoint("http://localhost:6382");
-
+        storj = new Storj("http://localhost:6382")
+                .setDownloadDirectory(Paths.get(System.getProperty("java.io.tmpdir")));
         bucket = new Bucket("74b9ce6f3c25f772ccdaaf08", "test", null, true);
         file = new File("file-id", "file-name", null, true, 1, null, null, null, null);
     }
