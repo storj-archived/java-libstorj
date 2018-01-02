@@ -1,5 +1,5 @@
 /***************************************************************************
- * Copyright (C) 2017 Kaloyan Raev
+ * Copyright (C) 2017-2018 Kaloyan Raev
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -420,12 +420,13 @@ static void list_files_callback(uv_work_t *work_req, int status)
         jobjectArray fileArray = env->NewObjectArray(req->total_files, fileClass, NULL);
         jmethodID fileInit = env->GetMethodID(fileClass,
                                               "<init>",
-                                              "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+                                              "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
 
         for (uint32_t i = 0; i < req->total_files; i++) {
             storj_file_meta_t *file = &req->files[i];
 
             jstring id = (file->id) ? env->NewStringUTF(file->id) : NULL;
+            jstring bucketId = (file->bucket_id) ? env->NewStringUTF(file->bucket_id) : NULL;
             jstring filename = (file->filename) ? env->NewStringUTF(file->filename) : NULL;
             jstring created = (file->created) ? env->NewStringUTF(file->created) : NULL;
             jstring mimetype = (file->mimetype) ? env->NewStringUTF(file->mimetype) : NULL;
@@ -436,6 +437,7 @@ static void list_files_callback(uv_work_t *work_req, int status)
             jobject fileObject = env->NewObject(fileClass,
                                                 fileInit,
                                                 id,
+                                                bucketId,
                                                 filename,
                                                 created,
                                                 file->decrypted,
@@ -449,6 +451,9 @@ static void list_files_callback(uv_work_t *work_req, int status)
             env->DeleteLocalRef(fileObject);
             if (id) {
                 env->DeleteLocalRef(id);
+            }
+            if (bucketId) {
+                env->DeleteLocalRef(bucketId);
             }
             if (filename) {
                 env->DeleteLocalRef(filename);

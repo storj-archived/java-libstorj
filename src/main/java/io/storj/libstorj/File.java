@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Kaloyan Raev
+ * Copyright (C) 2017-2018 Kaloyan Raev
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -24,6 +24,7 @@ import java.util.Objects;
 public class File implements Serializable, Comparable<File> {
 
     private String id;
+    private String bucketId;
     private String name;
     private String created;
     private boolean decrypted;
@@ -34,6 +35,7 @@ public class File implements Serializable, Comparable<File> {
     private String hmac;
 
     public File(String id,
+                String bucketId,
                 String name,
                 String created,
                 boolean decrypted,
@@ -43,6 +45,7 @@ public class File implements Serializable, Comparable<File> {
                 String index,
                 String hmac) {
         this.id = id;
+        this.bucketId = bucketId;
         this.name = name;
         this.created = created;
         this.decrypted = decrypted;
@@ -55,6 +58,10 @@ public class File implements Serializable, Comparable<File> {
 
     public String getId() {
         return id;
+    }
+
+    public String getBucketId() {
+        return bucketId;
     }
 
     public String getName() {
