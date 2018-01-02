@@ -78,7 +78,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <forkMode>once</forkMode>
-          <argLine>-Djava.library.path=${project.basedir}/target/classes:${java.library.path}</argLine>
+          <argLine>-Djava.library.path=${project.build.directory}/classes:${java.library.path}</argLine>
         </configuration>
       </plugin>
     </plugins>

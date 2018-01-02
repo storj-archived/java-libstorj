@@ -14,5 +14,12 @@ buildNumber.properties
 /.classpath
 /.settings/
 
+# Gradle
+build/
+/.gradle
+
 # Crash logs
 hs*.log
+
+# Android Studio project files
+*.iml
