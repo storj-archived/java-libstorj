@@ -1,3 +1,10 @@
+import org.apache.tools.ant.filters.*
+
+plugins {
+    id "com.jfrog.bintray" version "1.7.3"
+}
+
+apply plugin: 'cpp'
 apply plugin: 'java'
 apply plugin: 'maven'
 
@@ -10,7 +17,7 @@ sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
 repositories {
-     maven { url "https://repo.maven.apache.org/maven2" }
+    mavenCentral()
 }
 
 dependencies {
@@ -18,5 +25,76 @@ dependencies {
 }
 
 test {
-    systemProperty 'java.library.path','target/classes'
+    systemProperty 'java.library.path','build/libs/jni/shared'
+}
+
+processResources {
+    filter ReplaceTokens, tokens: [
+            "project.version": project.version
+    ]
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
+
+model {
+    components {
+        jni(NativeLibrarySpec) {
+            baseName 'storj-java'
+            sources {
+                cpp {
+                    source {
+                        srcDir 'src/main/cpp'
+                        include "**/*.cpp"
+                    }
+                }
+            }
+            binaries.withType(StaticLibraryBinarySpec) {
+                buildable = false
+            }
+        }
+    }
+    toolChains {
+        gcc(Gcc) {
+            eachPlatform {
+                cppCompiler.withArguments { args ->
+                    args << "-c"
+                    args << "-Wall"
+                    args << "-fPIC"
+                    args << "-I/usr/lib/jvm/java/include"
+                    args << "-I/usr/lib/jvm/java/include/linux"
+                }
+                linker.withArguments { args ->
+                    args << "-fPIC"
+                    args << "-shared"
+                    args << "-lstorj"
+                }
+            }
+        }
+    }
+}
+
+bintray {
+    user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+    configurations = ['archives']
+    publish = true
+    pkg {
+        repo = 'maven'
+        name = 'libstorj-java'
+        licenses = ['LGPL-3.0']
+        vcsUrl = 'https://github.com/Storj/java-libstorj.git'
+    }
 }
