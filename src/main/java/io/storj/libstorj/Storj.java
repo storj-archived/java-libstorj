@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Kaloyan Raev
+ * Copyright (C) 2017-2018 Kaloyan Raev
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -20,9 +20,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
@@ -38,8 +35,8 @@ public class Storj {
     private String host;
     private int port;
     private Keys keys;
-    private Path configDir;
-    private Path downloadDir;
+    private java.io.File configDir;
+    private java.io.File downloadDir;
 
     static {
         loadLibrary();
@@ -92,16 +89,16 @@ public class Storj {
         host = bridgeHost;
         port = bridgePort;
 
-        configDir = Paths.get(System.getProperty("user.home")).resolve(".storj");
-        downloadDir = Paths.get(System.getProperty("user.dir"));
+        configDir = new java.io.File(System.getProperty("user.home"), ".storj");
+        downloadDir = new java.io.File(System.getProperty("user.dir"));
     }
 
-    public Storj setConfigDirectory(Path dir) {
+    public Storj setConfigDirectory(java.io.File dir) {
         configDir = dir;
         return this;
     }
 
-    public Storj setDownloadDirectory(Path dir) {
+    public Storj setDownloadDirectory(java.io.File dir) {
         downloadDir = dir;
         return this;
     }
@@ -121,7 +118,7 @@ public class Storj {
     }
 
     public boolean keysExist() {
-        return Files.exists(getAuthFile());
+        return getAuthFile().exists();
     }
 
     public Keys getKeys(String passphrase) {
@@ -146,8 +143,8 @@ public class Storj {
         return success;
     }
 
-    public boolean deleteKeys() throws IOException {
-        boolean success = Files.deleteIfExists(getAuthFile());
+    public boolean deleteKeys() {
+        boolean success = getAuthFile().delete();
         if (success) {
             keys = null;
         }
@@ -215,30 +212,30 @@ public class Storj {
 
     public void downloadFile(Bucket bucket, File file, DownloadFileCallback callback) throws KeysNotFoundException {
         checkDownloadDir();
-        Path localPath = downloadDir.resolve(file.getName());
+        String localPath = new java.io.File(downloadDir, file.getName()).getPath();
         downloadFile(bucket, file, localPath, callback);
     }
 
-    public void downloadFile(Bucket bucket, File file, Path localPath, DownloadFileCallback callback)
+    public void downloadFile(Bucket bucket, File file, String localPath, DownloadFileCallback callback)
             throws KeysNotFoundException {
         checkKeys();
-        _downloadFile(new Environment(), bucket.getId(), file, localPath.toString(), callback);
+        _downloadFile(new Environment(), bucket.getId(), file, localPath, callback);
     }
 
-    public void uploadFile(Bucket bucket, Path localPath, UploadFileCallback callback) throws KeysNotFoundException {
-        uploadFile(bucket, localPath.getFileName().toString(), localPath, callback);
+    public void uploadFile(Bucket bucket, String localPath, UploadFileCallback callback) throws KeysNotFoundException {
+        uploadFile(bucket, new java.io.File(localPath).getName(), localPath, callback);
     }
 
-    public void uploadFile(Bucket bucket, String fileName, Path localPath, UploadFileCallback callback) throws KeysNotFoundException {
+    public void uploadFile(Bucket bucket, String fileName, String localPath, UploadFileCallback callback) throws KeysNotFoundException {
         checkKeys();
-        _uploadFile(new Environment(), bucket.getId(), fileName, localPath.toString(), callback);
+        _uploadFile(new Environment(), bucket.getId(), fileName, localPath, callback);
     }
 
-    private Path getAuthFile() throws IllegalStateException {
+    private java.io.File getAuthFile() throws IllegalStateException {
         if (configDir == null) {
-            throw new IllegalStateException("appDir is not set");
+            throw new IllegalStateException("config dir is not set");
         }
-        return configDir.resolve(host + ".json");
+        return new java.io.File(configDir, host + ".json");
     }
 
     private void checkDownloadDir() throws IllegalStateException {
