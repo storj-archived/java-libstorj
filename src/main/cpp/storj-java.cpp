@@ -24,8 +24,6 @@
 #include <direct.h>
 #endif
 
-#define JAVA_LIBSTORJ_VERSION "java-libstorj-0.5"
-
 #define INIT_ENV_ERROR "Failed to initialize Storj environment"
 
 typedef struct {
