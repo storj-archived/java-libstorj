@@ -17,7 +17,6 @@
 package io.storj.libstorj;
 
 import java.net.MalformedURLException;
-import java.nio.file.Paths;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -33,7 +32,7 @@ public class StorjTest {
         storj = new Storj("http://localhost:6382")
                 .setDownloadDirectory(new java.io.File(System.getProperty("java.io.tmpdir")));
         bucket = new Bucket("74b9ce6f3c25f772ccdaaf08", "test", null, true);
-        file = new File("file-id", "file-name", null, true, 1, null, null, null, null);
+        file = new File("file-id", "74b9ce6f3c25f772ccdaaf08", "file-name", null, true, 1, null, null, null, null);
     }
 
     @Test
