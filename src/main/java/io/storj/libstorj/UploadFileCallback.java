@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Kaloyan Raev
+ * Copyright (C) 2017-2018 Kaloyan Raev
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -20,7 +20,7 @@ public interface UploadFileCallback {
 
     void onProgress(String filePath, double progress, long uploadedBytes, long totalBytes);
 
-    void onComplete(String filePath, String fileId);
+    void onComplete(String filePath, File file);
 
     void onError(String filePath, String message);
 

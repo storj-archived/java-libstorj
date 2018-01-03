@@ -664,7 +664,7 @@ static void upload_file_progress_callback(double progress, uint64_t bytes, uint6
     env->DeleteLocalRef(callbackClass);
 }
 
-static void upload_file_complete_callback(int status, char *file_id, void *handle)
+static void upload_file_complete_callback(int status, storj_file_meta_t *file, void *handle)
 {
     jcallback_t *jcallback = (jcallback_t *) handle;
     JNIEnv *env = jcallback->env;
@@ -676,18 +676,45 @@ static void upload_file_complete_callback(int status, char *file_id, void *handl
         sprintf(error_message, "Upload failed. %s (%d)", storj_strerror(status), status);
         error_callback(env, callbackObject, cb_extension->filePath, error_message);
     } else {
+        jclass fileClass = env->FindClass("io/storj/libstorj/File");
+        jmethodID fileInit = env->GetMethodID(fileClass,
+                                              "<init>",
+                                              "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+
+        jstring id = (file->id) ? env->NewStringUTF(file->id) : NULL;
+        jstring bucketId = (file->bucket_id) ? env->NewStringUTF(file->bucket_id) : NULL;
+        jstring filename = (file->filename) ? env->NewStringUTF(file->filename) : NULL;
+        jstring created = (file->created) ? env->NewStringUTF(file->created) : NULL;
+        jstring mimetype = (file->mimetype) ? env->NewStringUTF(file->mimetype) : NULL;
+        jstring erasure = (file->erasure) ? env->NewStringUTF(file->erasure) : NULL;
+        jstring index = (file->index) ? env->NewStringUTF(file->index) : NULL;
+        jstring hmac = (file->hmac) ? env->NewStringUTF(file->hmac) : NULL;
+
+        jobject fileObject = env->NewObject(fileClass,
+                                            fileInit,
+                                            id,
+                                            bucketId,
+                                            filename,
+                                            created,
+                                            file->decrypted,
+                                            file->size,
+                                            mimetype,
+                                            erasure,
+                                            index,
+                                            hmac);
+
         jclass callbackClass = env->GetObjectClass(callbackObject);
         jmethodID callbackMethod = env->GetMethodID(callbackClass,
                                                     "onComplete",
-                                                    "(Ljava/lang/String;Ljava/lang/String;)V");
+                                                    "(Ljava/lang/String;Lio/storj/libstorj/File;)V");
 
         env->CallVoidMethod(callbackObject,
                             callbackMethod,
                             cb_extension->filePath,
-                            env->NewStringUTF(file_id));
+                            fileObject);
     }
 
-    free(file_id);
+    storj_free_uploaded_file_info(file);
 }
 
 static int upload_file(

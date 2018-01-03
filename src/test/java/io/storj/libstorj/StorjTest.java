@@ -146,8 +146,8 @@ public class StorjTest {
             }
 
             @Override
-            public void onComplete(String filePath, String fileId) {
-                System.out.println(fileId);
+            public void onComplete(String filePath, File file) {
+                System.out.println(file.getId());
             }
         });
     }
