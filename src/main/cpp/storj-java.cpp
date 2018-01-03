@@ -33,7 +33,7 @@ typedef struct {
 
 typedef struct {
     jcallback_t base;
-    jobject file;
+    jstring fileId;
     jstring localPath;
 } jdownload_callback_t;
 
@@ -52,25 +52,14 @@ static void error_callback(JNIEnv *env, jobject callbackObject, const char *mess
                         env->NewStringUTF(message));
 }
 
-static void error_callback(JNIEnv *env, jobject callbackObject, jstring filePath, const char *message) {
+static void error_callback(JNIEnv *env, jobject callbackObject, jstring arg, const char *message) {
     jclass callbackClass = env->GetObjectClass(callbackObject);
     jmethodID callbackMethod = env->GetMethodID(callbackClass,
                                                 "onError",
                                                 "(Ljava/lang/String;Ljava/lang/String;)V");
     env->CallVoidMethod(callbackObject,
                         callbackMethod,
-                        filePath,
-                        env->NewStringUTF(message));
-}
-
-static void error_callback(JNIEnv *env, jobject callbackObject, jobject file, const char *message) {
-    jclass callbackClass = env->GetObjectClass(callbackObject);
-    jmethodID callbackMethod = env->GetMethodID(callbackClass,
-                                                "onError",
-                                                "(Lio/storj/libstorj/File;Ljava/lang/String;)V");
-    env->CallVoidMethod(callbackObject,
-                        callbackMethod,
-                        file,
+                        arg,
                         env->NewStringUTF(message));
 }
 
@@ -522,12 +511,12 @@ static void download_file_progress_callback(double progress, uint64_t bytes, uin
     jclass callbackClass = env->GetObjectClass(callbackObject);
     jmethodID callbackMethod = env->GetMethodID(callbackClass,
                                                 "onProgress",
-                                                "(Lio/storj/libstorj/File;DJJ)V");
+                                                "(Ljava/lang/String;DJJ)V");
 
     jdownload_callback_t *cb_extension = (jdownload_callback_t *) handle;
     env->CallVoidMethod(callbackObject,
                         callbackMethod,
-                        cb_extension->file,
+                        cb_extension->fileId,
                         progress,
                         bytes,
                         total_bytes);
@@ -549,16 +538,16 @@ static void download_file_complete_callback(int status, FILE *fd, void *handle)
     if (status) {
         char error_message[256];
         sprintf(error_message, "Download failed. %s (%d)", storj_strerror(status), status);
-        error_callback(env, callbackObject, cb_extension->file, error_message);
+        error_callback(env, callbackObject, cb_extension->fileId, error_message);
     } else {
         jclass callbackClass = env->GetObjectClass(callbackObject);
         jmethodID callbackMethod = env->GetMethodID(callbackClass,
                                                     "onComplete",
-                                                    "(Lio/storj/libstorj/File;Ljava/lang/String;)V");
+                                                    "(Ljava/lang/String;Ljava/lang/String;)V");
 
         env->CallVoidMethod(callbackObject,
                             callbackMethod,
-                            cb_extension->file,
+                            cb_extension->fileId,
                             cb_extension->localPath);
     }
 }
@@ -599,13 +588,9 @@ Java_io_storj_libstorj_Storj__1downloadFile(
         jobject /* instance */,
         jobject storjEnv,
         jstring bucketId,
-        jobject file,
+        jstring fileId,
         jstring localPath,
         jobject callbackObject) {
-    jclass fileClass = env->GetObjectClass(file);
-    jmethodID mid = env->GetMethodID(fileClass, "getId", "()Ljava/lang/String;");
-    jstring fileId = (jstring) env->CallObjectMethod(file, mid);
-
     const char *bucket_id = env->GetStringUTFChars(bucketId, NULL);
     const char *file_id = env->GetStringUTFChars(fileId, NULL);
     const char *path = env->GetStringUTFChars(localPath, NULL);
@@ -613,7 +598,7 @@ Java_io_storj_libstorj_Storj__1downloadFile(
     storj_env_t *storj_env = init_env(env, storjEnv);
 
     if (!storj_env) {
-        error_callback(env, callbackObject, file, INIT_ENV_ERROR);
+        error_callback(env, callbackObject, fileId, INIT_ENV_ERROR);
     } else {
         jcallback_t jcallback = {
                 .env = env,
@@ -622,7 +607,7 @@ Java_io_storj_libstorj_Storj__1downloadFile(
 
         jdownload_callback_t cb_extension = {
                 .base = jcallback,
-                .file = file,
+                .fileId = fileId,
                 .localPath = localPath
         };
 
@@ -640,9 +625,9 @@ Java_io_storj_libstorj_Storj__1downloadFile(
         if (fd == NULL) {
             char error_message[256];
             sprintf(error_message, "Unable to open %s: %s", path, strerror(errno));
-            error_callback(env, callbackObject, file, error_message);
+            error_callback(env, callbackObject, fileId, error_message);
         } else if (download_file(fd, bucket_id, file_id, storj_env, &cb_extension)) {
-            error_callback(env, callbackObject, file, "Can't allocate memory");
+            error_callback(env, callbackObject, fileId, "Can't allocate memory");
         } else {
             uv_run(storj_env->loop, UV_RUN_DEFAULT);
         }

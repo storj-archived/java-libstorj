@@ -156,16 +156,16 @@ public class StorjTest {
     public void testDownloadFile() {
         storj.downloadFile(bucket, file, new DownloadFileCallback() {
             @Override
-            public void onProgress(File file, double progress, long downloadedBytes, long totalBytes) {
+            public void onProgress(String fileId, double progress, long downloadedBytes, long totalBytes) {
             }
 
             @Override
-            public void onComplete(File file, String localPath) {
+            public void onComplete(String fileId, String localPath) {
                 System.out.println(localPath);
             }
 
             @Override
-            public void onError(File file, String message) {
+            public void onError(String fileId, String message) {
                 System.out.println(message);
             }
         });

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Kaloyan Raev
+ * Copyright (C) 2017-2018 Kaloyan Raev
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -18,10 +18,10 @@ package io.storj.libstorj;
 
 public interface DownloadFileCallback {
 
-    void onProgress(File file, double progress, long downloadedBytes, long totalBytes);
+    void onProgress(String fileId, double progress, long downloadedBytes, long totalBytes);
 
-    void onComplete(File file, String localPath);
+    void onComplete(String fileId, String localPath);
 
-    void onError(File file, String message);
+    void onError(String fileId, String message);
 
 }

@@ -196,18 +196,30 @@ public class Storj {
     }
 
     public void deleteBucket(Bucket bucket, DeleteBucketCallback callback) throws KeysNotFoundException {
+        deleteBucket(bucket.getId(), callback);
+    }
+
+    public void deleteBucket(String bucketId, DeleteBucketCallback callback) throws KeysNotFoundException {
         checkKeys();
-        _deleteBucket(new Environment(), bucket.getId(), callback);
+        _deleteBucket(new Environment(), bucketId, callback);
     }
 
     public void listFiles(Bucket bucket, ListFilesCallback callback) throws KeysNotFoundException {
+        listFiles(bucket.getId(), callback);
+    }
+
+    public void listFiles(String bucketId, ListFilesCallback callback) throws KeysNotFoundException {
         checkKeys();
-        _listFiles(new Environment(), bucket.getId(), callback);
+        _listFiles(new Environment(), bucketId, callback);
     }
 
     public void deleteFile(Bucket bucket, File file, DeleteFileCallback callback) throws KeysNotFoundException {
+        deleteFile(bucket.getId(), file.getId(), callback);
+    }
+
+    public void deleteFile(String bucketId, String fileId, DeleteFileCallback callback) throws KeysNotFoundException {
         checkKeys();
-        _deleteFile(new Environment(), bucket.getId(), file.getId(), callback);
+        _deleteFile(new Environment(), bucketId, fileId, callback);
     }
 
     public void downloadFile(Bucket bucket, File file, DownloadFileCallback callback) throws KeysNotFoundException {
@@ -218,17 +230,32 @@ public class Storj {
 
     public void downloadFile(Bucket bucket, File file, String localPath, DownloadFileCallback callback)
             throws KeysNotFoundException {
+        downloadFile(bucket.getId(), file.getId(), localPath, callback);
+    }
+
+    public void downloadFile(String bucketId, String fileId, String localPath, DownloadFileCallback callback)
+            throws KeysNotFoundException {
         checkKeys();
-        _downloadFile(new Environment(), bucket.getId(), file, localPath, callback);
+        _downloadFile(new Environment(), bucketId, fileId, localPath, callback);
     }
 
     public void uploadFile(Bucket bucket, String localPath, UploadFileCallback callback) throws KeysNotFoundException {
-        uploadFile(bucket, new java.io.File(localPath).getName(), localPath, callback);
+        uploadFile(bucket.getId(), localPath, callback);
+    }
+
+    public void uploadFile(String bucketId, String localPath, UploadFileCallback callback)
+            throws KeysNotFoundException {
+        uploadFile(bucketId, new java.io.File(localPath).getName(), localPath, callback);
     }
 
     public void uploadFile(Bucket bucket, String fileName, String localPath, UploadFileCallback callback) throws KeysNotFoundException {
+        uploadFile(bucket.getId(), fileName, localPath, callback);
+    }
+
+    public void uploadFile(String bucketId, String fileName, String localPath, UploadFileCallback callback)
+            throws KeysNotFoundException {
         checkKeys();
-        _uploadFile(new Environment(), bucket.getId(), fileName, localPath, callback);
+        _uploadFile(new Environment(), bucketId, fileName, localPath, callback);
     }
 
     private java.io.File getAuthFile() throws IllegalStateException {
@@ -270,7 +297,7 @@ public class Storj {
 
     private native void _deleteFile(Environment env, String bucketId, String fileId, DeleteFileCallback callback);
 
-    private native void _downloadFile(Environment env, String bucketId, File file, String path,
+    private native void _downloadFile(Environment env, String bucketId, String fileId, String path,
             DownloadFileCallback callback);
 
     private native void _uploadFile(Environment env, String bucketId, String fileName, String localPath,
