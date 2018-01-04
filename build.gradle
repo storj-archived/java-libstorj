@@ -7,6 +7,7 @@ plugins {
 apply plugin: 'cpp'
 apply plugin: 'java'
 apply plugin: 'maven'
+apply plugin: 'maven-publish'
 
 group = 'io.storj'
 version = '0.5'
@@ -82,6 +83,16 @@ model {
                     args << "-lstorj"
                 }
             }
+        }
+    }
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifactId 'libstorj-java'
+            
+            from components.java
         }
     }
 }
