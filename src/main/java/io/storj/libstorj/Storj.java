@@ -213,8 +213,8 @@ public class Storj {
         _listFiles(new Environment(), bucketId, callback);
     }
 
-    public void getFile(Bucket bucket, File file, GetFileCallback callback) throws KeysNotFoundException {
-        getFile(bucket.getId(), file.getId(), callback);
+    public void getFile(Bucket bucket, String fileId, GetFileCallback callback) throws KeysNotFoundException {
+        getFile(bucket.getId(), fileId, callback);
     }
 
     public void getFile(String bucketId, String fileId, GetFileCallback callback) throws KeysNotFoundException {

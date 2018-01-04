@@ -135,7 +135,7 @@ public class StorjTest {
 
     @Test
     public void testGetFiles() {
-        storj.getFile(bucket, file, new GetFileCallback() {
+        storj.getFile(bucket, file.getId(), new GetFileCallback() {
             @Override
             public void onFileReceived(File file) {
                 System.out.println(file);
