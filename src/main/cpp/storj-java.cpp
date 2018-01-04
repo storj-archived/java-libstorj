@@ -502,6 +502,97 @@ Java_io_storj_libstorj_Storj__1listFiles(
     env->ReleaseStringUTFChars(bucketId, bucket_id);
 }
 
+static void get_file_callback(uv_work_t *work_req, int status)
+{
+    assert(status == 0);
+    get_file_info_request_t *req = (get_file_info_request_t *) work_req->data;
+    jcallback_t *jcallback = (jcallback_t *) req->handle;
+    JNIEnv *env = jcallback->env;
+    jobject callbackObject = jcallback->callbackObject;
+
+    if (req->status_code != 200) {
+        char error_message[256];
+        if (req->status_code == 404) {
+            sprintf(error_message, "Bucket id [%s] or file id [%s] does not exist", req->bucket_id, req->file->id);
+        } else if (req->status_code == 400) {
+            sprintf(error_message, "Bucket id [%s] or file id [%s] is invalid", req->bucket_id, req->file->id);
+        } else if (req->status_code == 401) {
+            strcpy(error_message, "Invalid user credentials");
+        } else {
+            sprintf(error_message, "Request failed with status code: %i", req->status_code);
+        }
+        error_callback(env, callbackObject, error_message);
+    } else {
+        jclass fileClass = env->FindClass("io/storj/libstorj/File");
+        jmethodID fileInit = env->GetMethodID(fileClass,
+                                              "<init>",
+                                              "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+
+        jstring id = (req->file->id) ? env->NewStringUTF(req->file->id) : NULL;
+        jstring bucketId = (req->file->bucket_id) ? env->NewStringUTF(req->file->bucket_id) : NULL;
+        jstring filename = (req->file->filename) ? env->NewStringUTF(req->file->filename) : NULL;
+        jstring created = (req->file->created) ? env->NewStringUTF(req->file->created) : NULL;
+        jstring mimetype = (req->file->mimetype) ? env->NewStringUTF(req->file->mimetype) : NULL;
+        jstring erasure = (req->file->erasure) ? env->NewStringUTF(req->file->erasure) : NULL;
+        jstring index = (req->file->index) ? env->NewStringUTF(req->file->index) : NULL;
+        jstring hmac = (req->file->hmac) ? env->NewStringUTF(req->file->hmac) : NULL;
+
+        jobject fileObject = env->NewObject(fileClass,
+                                            fileInit,
+                                            id,
+                                            bucketId,
+                                            filename,
+                                            created,
+                                            req->file->decrypted,
+                                            req->file->size,
+                                            mimetype,
+                                            erasure,
+                                            index,
+                                            hmac);
+
+        jclass callbackClass = env->GetObjectClass(callbackObject);
+        jmethodID callbackMethod = env->GetMethodID(callbackClass,
+                                                    "onFileReceived",
+                                                    "[Lio/storj/libstorj/File;V");
+        env->CallVoidMethod(callbackObject, callbackMethod, fileObject);
+    }
+
+    storj_free_get_file_info_request(req);
+    free(work_req);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_io_storj_libstorj_Storj__1getFile(
+        JNIEnv *env,
+        jobject /* instance */,
+        jobject storjEnv,
+        jstring bucketId,
+        jstring fileId,
+        jobject callbackObject) {
+    const char *bucket_id = env->GetStringUTFChars(bucketId, NULL);
+    const char *file_id = env->GetStringUTFChars(fileId, NULL);
+
+    storj_env_t *storj_env = init_env(env, storjEnv);
+
+    if (!storj_env) {
+        error_callback(env, callbackObject, INIT_ENV_ERROR);
+    } else {
+        jcallback_t jcallback = {
+                .env = env,
+                .callbackObject = callbackObject
+        };
+        storj_bridge_get_file_info(storj_env, bucket_id, file_id, &jcallback, get_file_callback);
+
+        uv_run(storj_env->loop, UV_RUN_DEFAULT);
+
+        storj_destroy_env(storj_env);
+    }
+
+    env->ReleaseStringUTFChars(bucketId, bucket_id);
+    env->ReleaseStringUTFChars(fileId, file_id);
+}
+
 static void download_file_progress_callback(double progress, uint64_t bytes, uint64_t total_bytes, void *handle)
 {
     jcallback_t *jcallback = (jcallback_t *) handle;

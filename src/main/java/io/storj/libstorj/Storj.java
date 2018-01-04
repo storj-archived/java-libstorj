@@ -213,6 +213,15 @@ public class Storj {
         _listFiles(new Environment(), bucketId, callback);
     }
 
+    public void getFile(Bucket bucket, File file, GetFileCallback callback) throws KeysNotFoundException {
+        getFile(bucket.getId(), file.getId(), callback);
+    }
+
+    public void getFile(String bucketId, String fileId, GetFileCallback callback) throws KeysNotFoundException {
+        checkKeys();
+        _getFile(new Environment(), bucketId, fileId, callback);
+    }
+
     public void deleteFile(Bucket bucket, File file, DeleteFileCallback callback) throws KeysNotFoundException {
         deleteFile(bucket.getId(), file.getId(), callback);
     }
@@ -294,6 +303,8 @@ public class Storj {
     private native void _deleteBucket(Environment env, String bucketId, DeleteBucketCallback callback);
 
     private native void _listFiles(Environment env, String bucketId, ListFilesCallback callback);
+
+    private native void _getFile(Environment env, String bucketId, String fileId, GetFileCallback callback);
 
     private native void _deleteFile(Environment env, String bucketId, String fileId, DeleteFileCallback callback);
 

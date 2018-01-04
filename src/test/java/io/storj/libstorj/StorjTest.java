@@ -134,6 +134,21 @@ public class StorjTest {
     }
 
     @Test
+    public void testGetFiles() {
+        storj.getFile(bucket, file, new GetFileCallback() {
+            @Override
+            public void onFileReceived(File file) {
+                System.out.println(file);
+            }
+
+            @Override
+            public void onError(String message) {
+                System.out.println(message);
+            }
+        });
+    }
+
+    @Test
     public void testUploadFile() {
         storj.uploadFile(bucket, "/tmp/file-name", new UploadFileCallback() {
             @Override
