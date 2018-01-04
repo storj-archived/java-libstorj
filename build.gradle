@@ -9,13 +9,13 @@ apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
 
-group = 'io.storj'
-version = '0.5'
+group 'io.storj'
+version '0.5'
 
-description = """Java bindings for libstorj"""
+description """Java bindings for libstorj"""
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility 1.7
+targetCompatibility 1.7
 
 repositories {
     mavenCentral()
@@ -91,7 +91,7 @@ publishing {
     publications {
         maven(MavenPublication) {
             artifactId 'libstorj-java'
-            
+
             from components.java
         }
     }
