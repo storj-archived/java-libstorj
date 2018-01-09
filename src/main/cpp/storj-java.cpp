@@ -18,7 +18,6 @@
 #include <string>
 #include <storj.h>
 #include <nettle/version.h>
-//#include <microhttpd/microhttpd.h>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -1275,11 +1274,3 @@ Java_io_storj_libstorj_NativeLibraries_getNettleVersion(
     sprintf(version, "%d.%d", nettle_version_major(), nettle_version_minor());
     return env->NewStringUTF(version);
 }
-
-//extern "C"
-//JNIEXPORT jstring JNICALL
-//Java_io_storj_libstorj_NativeLibraries_getMHDVersion(
-//        JNIEnv *env,
-//        jclass /* clazz */) {
-//    return env->NewStringUTF(MHD_get_version());
-//}
