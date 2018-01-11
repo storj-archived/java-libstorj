@@ -201,4 +201,9 @@ public class StorjTest {
         });
     }
 
+    @Test
+    public void testVerifyKeys() {
+        storj.verifyKeys("myuser", "mypass");
+    }
+
 }
