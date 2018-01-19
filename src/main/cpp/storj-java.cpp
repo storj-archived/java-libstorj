@@ -57,12 +57,6 @@ int getJNIEnv(JNIEnv **env) {
     return status;
 }
 
-void free_storj_env(storj_env_t *storj_env) {
-    uv_loop_close(storj_env->loop);
-    free(storj_env->loop);
-    storj_destroy_env(storj_env);
-};
-
 typedef struct {
     jobject callbackObject;
 } jcallback_t;
@@ -157,7 +151,6 @@ static storj_env_t *init_env(JNIEnv *env, jobject storjEnv)
     };
 
     storj_env_t *storj_env = storj_init_env(&bridge_options, &encrypt_options, &http_options, &log_options);
-    storj_env->loop = uv_loop_new();
 
     if (http_options.user_agent)
         env->ReleaseStringUTFChars(userAgent, http_options.user_agent);
@@ -266,7 +259,7 @@ Java_io_storj_libstorj_Storj__1getBuckets(
 
         uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
-        free_storj_env(storj_env);
+        storj_destroy_env(storj_env);
     }
 }
 
@@ -346,7 +339,7 @@ Java_io_storj_libstorj_Storj__1getBucket(
 
         uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
-        free_storj_env(storj_env);
+        storj_destroy_env(storj_env);
     }
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
@@ -429,7 +422,7 @@ Java_io_storj_libstorj_Storj__1createBucket(
 
         uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
-        free_storj_env(storj_env);
+        storj_destroy_env(storj_env);
     }
 
     env->ReleaseStringUTFChars(bucketName, bucket_name);
@@ -554,7 +547,7 @@ Java_io_storj_libstorj_Storj__1listFiles(
 
         uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
-        free_storj_env(storj_env);
+        storj_destroy_env(storj_env);
     }
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
@@ -654,7 +647,7 @@ Java_io_storj_libstorj_Storj__1getFile(
 
         uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
-        free_storj_env(storj_env);
+        storj_destroy_env(storj_env);
     }
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
@@ -802,7 +795,7 @@ Java_io_storj_libstorj_Storj__1downloadFile(
             uv_run(storj_env->loop, UV_RUN_DEFAULT);
         }
 
-        free_storj_env(storj_env);
+        storj_destroy_env(storj_env);
     }
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
@@ -973,7 +966,7 @@ Java_io_storj_libstorj_Storj__1uploadFile(
             uv_run(storj_env->loop, UV_RUN_DEFAULT);
         }
 
-        free_storj_env(storj_env);
+        storj_destroy_env(storj_env);
     }
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
@@ -1038,7 +1031,7 @@ Java_io_storj_libstorj_Storj__1deleteBucket(
 
         uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
-        free_storj_env(storj_env);
+        storj_destroy_env(storj_env);
     }
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
@@ -1103,7 +1096,7 @@ Java_io_storj_libstorj_Storj__1deleteFile(
 
         uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
-        free_storj_env(storj_env);
+        storj_destroy_env(storj_env);
     }
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
@@ -1175,7 +1168,7 @@ Java_io_storj_libstorj_Storj__1register(
 
         uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
-        free_storj_env(storj_env);
+        storj_destroy_env(storj_env);
     }
 }
 
@@ -1250,7 +1243,7 @@ Java_io_storj_libstorj_Storj__1getInfo(
 
         uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
-        free_storj_env(storj_env);
+        storj_destroy_env(storj_env);
     }
 }
 
