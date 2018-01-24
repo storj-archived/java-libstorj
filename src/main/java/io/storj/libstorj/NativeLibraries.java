@@ -19,6 +19,10 @@ package io.storj.libstorj;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Utility class for getting version info about the dependent native libraries
+ * used at runtime.
+ */
 public class NativeLibraries {
 
     // Used to load the 'storj-java' library on application startup.
@@ -32,14 +36,35 @@ public class NativeLibraries {
         map.put("cURL", getCurlVersion());
         map.put("libuv", getLibuvVersion());
         map.put("Nettle", getNettleVersion());
-//        map.put("Microhttpd", getMHDVersion());
         return map;
     }
 
+    /**
+     * Returns the version of the json-c library.
+     * 
+     * @return a version string
+     */
     public static native String getJsonCVersion();
+
+    /**
+     * Returns the version of the cURL library.
+     * 
+     * @return a version string
+     */
     public static native String getCurlVersion();
+
+    /**
+     * Returns the version of the libuv library.
+     * 
+     * @return a version string
+     */
     public static native String getLibuvVersion();
+
+    /**
+     * Returns the version of the Nettle library.
+     * 
+     * @return a version string
+     */
     public static native String getNettleVersion();
-    public static native String getMHDVersion();
 
 }

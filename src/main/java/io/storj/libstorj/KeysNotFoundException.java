@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Kaloyan Raev
+ * Copyright (C) 2017-2018 Kaloyan Raev
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -16,6 +16,11 @@
  */
 package io.storj.libstorj;
 
+/**
+ * Thrown to indicate that a Storj method is called before importing keys.
+ * 
+ * @see Storj#importKeys(Keys, String)
+ */
 @SuppressWarnings("serial")
 public class KeysNotFoundException extends RuntimeException {
 }

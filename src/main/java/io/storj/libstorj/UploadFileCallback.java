@@ -16,12 +16,50 @@
  */
 package io.storj.libstorj;
 
+/**
+ * Callback interface for receiving the progress of executing the
+ * <code>uploadFile()</code> methods.
+ * 
+ * @see Storj#uploadFile(Bucket, String, UploadFileCallback)
+ * @see Storj#uploadFile(String, String, UploadFileCallback)
+ * @see Storj#uploadFile(Bucket, String, String, UploadFileCallback)
+ * @see Storj#uploadFile(String, String, String, UploadFileCallback)
+ */
 public interface UploadFileCallback {
 
+    /**
+     * Called when new progress is reported.
+     * 
+     * @param filePath
+     *            the local path (including file name) of the file being uploaded
+     * @param progress
+     *            the current progress from <code>0</code> to <code>1</code>, e.g.
+     *            <code>0.75</code> means 75% completed
+     * @param uploadedBytes
+     *            the number of bytes already uploaded
+     * @param totalBytes
+     *            the total bytes to be uploaded
+     */
     void onProgress(String filePath, double progress, long uploadedBytes, long totalBytes);
 
+    /**
+     * Called if the file was uploaded successfully.
+     * 
+     * @param filePath
+     *            the local path (including file name) of the uploaded file
+     * @param file
+     *            a {@link File} object of the uploaded file
+     */
     void onComplete(String filePath, File file);
 
+    /**
+     * Called if uploaded the file finished with error.
+     * 
+     * @param filePath
+     *            the local path (including file name) of the file being uploaded
+     * @param message
+     *            the error message
+     */
     void onError(String filePath, String message);
 
 }

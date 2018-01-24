@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Kaloyan Raev
+ * Copyright (C) 2017-2018 Kaloyan Raev
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -16,26 +16,59 @@
  */
 package io.storj.libstorj;
 
+/**
+ * A class representing the keys required for accessing the Storj network:
+ * <ul>
+ * <li>user's email for authentication with the Storj Bridge
+ * <li>user's password for authentication with the Storj Bridge
+ * <li>mnemonic for encrypting and decrypting the transferred files
+ * </ul>
+ */
 public class Keys {
 
     private String user;
     private String pass;
     private String mnemonic;
 
+    /**
+     * Constructs a new Keys object with the provided credentials.
+     * 
+     * @param user
+     *            the user's email
+     * @param pass
+     *            the user's password
+     * @param mnemonic
+     *            a 12 or 24-word mnemonic
+     */
     public Keys(String user, String pass, String mnemonic) {
         this.user = user;
         this.pass = pass;
         this.mnemonic = mnemonic;
     }
 
+    /**
+     * Returns the user's email.
+     * 
+     * @return an email address
+     */
     public String getUser() {
         return user;
     }
 
+    /**
+     * Returns the user's password.
+     * 
+     * @return a password
+     */
     public String getPass() {
         return pass;
     }
 
+    /**
+     * Returns the mnemonic for encrypting and decrypting files.
+     * 
+     * @return a 12 or 24-word mnemonic
+     */
     public String getMnemonic() {
         return mnemonic;
     }

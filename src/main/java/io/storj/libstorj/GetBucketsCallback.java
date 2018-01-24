@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Kaloyan Raev
+ * Copyright (C) 2017-2018 Kaloyan Raev
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -16,10 +16,28 @@
  */
 package io.storj.libstorj;
 
+/**
+ * Callback interface for receiving the response of the
+ * <code>getBuckets()</code> method.
+ * 
+ * @see Storj#getBuckets(GetBucketsCallback)
+ */
 public interface GetBucketsCallback {
 
+    /**
+     * Called if the buckets list was retrieved successfully.
+     * 
+     * @param buckets
+     *            an array of {@link Bucket} objects with the result
+     */
     void onBucketsReceived(Bucket[] buckets);
 
+    /**
+     * Called if getting the buckets list finished with error.
+     * 
+     * @param message
+     *            the error message
+     */
     void onError(String message);
 
 }

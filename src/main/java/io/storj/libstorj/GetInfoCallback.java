@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Kaloyan Raev
+ * Copyright (C) 2017-2018 Kaloyan Raev
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -16,10 +16,36 @@
  */
 package io.storj.libstorj;
 
+/**
+ * Callback interface for receiving the response from the <code>getInfo()</code>
+ * method.
+ * 
+ * @see Storj#getInfo(GetInfoCallback)
+ */
 public interface GetInfoCallback {
 
+    /**
+     * Called when the {@link Storj#getInfo(GetInfoCallback)} method finishes
+     * successfully.
+     * 
+     * @param title
+     *            the title of the Bridge API server
+     * @param description
+     *            the description of the Bridge API server
+     * @param version
+     *            the version of the Bridge API server
+     * @param host
+     *            the host the Bridge API server is listening for requests at
+     */
     void onInfoReceived(String title, String description, String version, String host);
 
+    /**
+     * Called when the {@link Storj#getInfo(GetInfoCallback)} method finishes with
+     * error.
+     * 
+     * @param message
+     *            the error message
+     */
     void onError(String message);
 
 }

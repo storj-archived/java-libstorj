@@ -16,10 +16,29 @@
  */
 package io.storj.libstorj;
 
+/**
+ * Callback interface for receiving the response from the <code>getFile()</code>
+ * methods.
+ * 
+ * @see Storj#getFile(Bucket, String, GetFileCallback)
+ * @see Storj#getFile(String, String, GetFileCallback)
+ */
 public interface GetFileCallback {
 
+    /**
+     * Called if the file info was retrieved successfully.
+     * 
+     * @param file
+     *            a {@link File} object with the result
+     */
     void onFileReceived(File file);
 
+    /**
+     * Called if getting the file info finished with error.
+     * 
+     * @param message
+     *            the error message
+     */
     void onError(String message);
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Kaloyan Raev
+ * Copyright (C) 2017-2018 Kaloyan Raev
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -16,10 +16,26 @@
  */
 package io.storj.libstorj;
 
+/**
+ * Callback interface for receiving the response from the
+ * <code>deleteFile()</code> methods.
+ * 
+ * @see Storj#deleteFile(Bucket, File, DeleteFileCallback)
+ * @see Storj#deleteFile(String, String, DeleteFileCallback)
+ */
 public interface DeleteFileCallback {
 
+    /**
+     * Called if the file was deleted successfully.
+     */
     void onFileDeleted();
 
+    /**
+     * Called if deleting the file finished with error.
+     * 
+     * @param message
+     *            the error message
+     */
     void onError(String message);
 
 }

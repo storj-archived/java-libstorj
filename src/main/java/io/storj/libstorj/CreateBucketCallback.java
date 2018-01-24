@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Kaloyan Raev
+ * Copyright (C) 2017-2018 Kaloyan Raev
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -16,10 +16,28 @@
  */
 package io.storj.libstorj;
 
+/**
+ * Callback interface for receiving the response from the
+ * <code>createBucket()</code> method.
+ * 
+ * @see Storj#createBucket(String, CreateBucketCallback)
+ */
 public interface CreateBucketCallback {
 
+    /**
+     * Called if the bucket was created successfully.
+     * 
+     * @param bucket
+     *            a {@link Bucket} object with the newly created bucket
+     */
     void onBucketCreated(Bucket bucket);
 
+    /**
+     * Called if creating the bucket finished with error.
+     * 
+     * @param message
+     *            the error message
+     */
     void onError(String message);
 
 }

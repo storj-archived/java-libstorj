@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Kaloyan Raev
+ * Copyright (C) 2017-2018 Kaloyan Raev
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -16,10 +16,29 @@
  */
 package io.storj.libstorj;
 
+/**
+ * Callback interface for receiving the response from the
+ * <code>listFiles()</code> methods.
+ * 
+ * @see Storj#listFiles(Bucket, ListFilesCallback)
+ * @see Storj#listFiles(String, ListFilesCallback)
+ */
 public interface ListFilesCallback {
 
+    /**
+     * Called if the files list was retrieved successfully.
+     * 
+     * @param files
+     *            an array of {@link File} objects with the result
+     */
     void onFilesReceived(File[] files);
 
+    /**
+     * Called if getting the files list finished with error.
+     * 
+     * @param message
+     *            the error message
+     */
     void onError(String message);
 
 }

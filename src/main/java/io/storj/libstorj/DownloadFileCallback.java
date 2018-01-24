@@ -16,12 +16,49 @@
  */
 package io.storj.libstorj;
 
+/**
+ * Callback interface for receiving the progress of executing the
+ * <code>downloadFile()</code> methods.
+ * 
+ * @see Storj#downloadFile(Bucket, File, DownloadFileCallback)
+ * @see Storj#downloadFile(Bucket, File, String, DownloadFileCallback)
+ * @see Storj#downloadFile(String, String, String, DownloadFileCallback)
+ */
 public interface DownloadFileCallback {
 
+    /**
+     * Called when new progress is reported.
+     * 
+     * @param fileId
+     *            the id of the file being downloaded
+     * @param progress
+     *            the current progress from <code>0</code> to <code>1</code>, e.g.
+     *            <code>0.75</code> means 75% completed
+     * @param downloadedBytes
+     *            the number of bytes already downloaded
+     * @param totalBytes
+     *            the total bytes to be downloaded
+     */
     void onProgress(String fileId, double progress, long downloadedBytes, long totalBytes);
 
+    /**
+     * Called if the file was downloaded successfully.
+     * 
+     * @param fileId
+     *            the id of the downloaded file
+     * @param localPath
+     *            the local path (including file name) of the downloaded file
+     */
     void onComplete(String fileId, String localPath);
 
+    /**
+     * Called if downloaded the file finished with error.
+     * 
+     * @param fileId
+     *            the id of the file being downloaded
+     * @param message
+     *            the error message
+     */
     void onError(String fileId, String message);
 
 }
