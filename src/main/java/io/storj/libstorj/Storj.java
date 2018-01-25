@@ -361,6 +361,22 @@ public class Storj {
     }
 
     /**
+     * Gets the bucket id by the provided bucket name.
+     * 
+     * @param bucketName
+     *            the bucket name
+     * @param callback
+     *            an implementation of the {@link GetBucketIdCallback} interface to
+     *            receive the response
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     */
+    public void getBucketId(String bucketName, GetBucketIdCallback callback) throws KeysNotFoundException {
+        checkKeys();
+        _getBucketId(new Environment(), bucketName, callback);
+    }
+
+    /**
      * Creates a new bucket.
      * 
      * @param bucketName
@@ -471,6 +487,41 @@ public class Storj {
     public void getFile(String bucketId, String fileId, GetFileCallback callback) throws KeysNotFoundException {
         checkKeys();
         _getFile(new Environment(), bucketId, fileId, callback);
+    }
+
+    /**
+     * Gets the file id by the provided file name.
+     * 
+     * @param bucket
+     *            the {@link Bucket} containing the file
+     * @param fileName
+     *            the file name
+     * @param callback
+     *            an implementation of the {@link GetFileIdCallback} interface to
+     *            receive the response
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     */
+    public void getFile(Bucket bucket, String fileName, GetFileIdCallback callback) throws KeysNotFoundException {
+        getFileId(bucket.getId(), fileName, callback);
+    }
+
+    /**
+     * Gets the file id by the provided file name.
+     * 
+     * @param bucketId
+     *            the id of the bucket containing the file
+     * @param fileName
+     *            the file name
+     * @param callback
+     *            an implementation of the {@link GetFileIdCallback} interface to
+     *            receive the response
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     */
+    public void getFileId(String bucketId, String fileName, GetFileIdCallback callback) throws KeysNotFoundException {
+        checkKeys();
+        _getFileId(new Environment(), bucketId, fileName, callback);
     }
 
     /**
@@ -697,6 +748,8 @@ public class Storj {
 
     private native void _getBucket(Environment env, String bucketId, GetBucketCallback callback);
 
+    private native void _getBucketId(Environment env, String bucketName, GetBucketIdCallback callback);
+
     private native void _createBucket(Environment env, String bucketName, CreateBucketCallback callback);
 
     private native void _deleteBucket(Environment env, String bucketId, DeleteBucketCallback callback);
@@ -704,6 +757,8 @@ public class Storj {
     private native void _listFiles(Environment env, String bucketId, ListFilesCallback callback);
 
     private native void _getFile(Environment env, String bucketId, String fileId, GetFileCallback callback);
+
+    private native void _getFileId(Environment env, String bucketId, String fileName, GetFileIdCallback callback);
 
     private native void _deleteFile(Environment env, String bucketId, String fileId, DeleteFileCallback callback);
 

@@ -122,7 +122,6 @@ public class File implements Serializable, Comparable<File> {
      * </p>
      * 
      * @return the formatted UTC time when the file was uploaded
-     * @return
      */
     public String getCreated() {
         return created;

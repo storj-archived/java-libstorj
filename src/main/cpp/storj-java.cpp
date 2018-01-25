@@ -345,6 +345,75 @@ Java_io_storj_libstorj_Storj__1getBucket(
     env->ReleaseStringUTFChars(bucketId, bucket_id);
 }
 
+static void get_bucket_id_callback(uv_work_t *work_req, int status)
+{
+    assert(status == 0);
+    get_bucket_id_request_t *req = (get_bucket_id_request_t *) work_req->data;
+    jcallback_t *jcallback = (jcallback_t *) req->handle;
+    jobject callbackObject = jcallback->callbackObject;
+
+    JNIEnv *env;
+    getJNIEnv(&env);
+
+    if (env != NULL) {
+        if (req->status_code != 200) {
+            char error_message[256];
+            if (req->status_code == 404) {
+                sprintf(error_message, "Cannot get id for bucket with name [%s]. Name does not exist.", req->bucket_name);
+            } else if (req->status_code == 401) {
+                strcpy(error_message, "Invalid user credentials");
+            } else {
+                sprintf(error_message, "Request failed with status code: %i", req->status_code);
+            }
+            error_callback(env, callbackObject, error_message);
+        } else if (req->bucket_id == NULL) {
+            error_callback(env, callbackObject, "Failed to get bucket id");
+        } else {
+            jstring bucketId = env->NewStringUTF(req->bucket_id);
+
+            jclass callbackClass = env->GetObjectClass(callbackObject);
+            jmethodID callbackMethod = env->GetMethodID(callbackClass,
+                                                        "onBucketIdReceived",
+                                                        "(Ljava/lang/String;)V");
+            env->CallVoidMethod(callbackObject, callbackMethod, bucketId);
+
+            env->DeleteGlobalRef(callbackObject);
+        }
+    }
+
+    json_object_put(req->response);
+    free(req);
+    free(work_req);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_io_storj_libstorj_Storj__1getBucketId(
+        JNIEnv *env,
+        jobject /* instance */,
+        jobject storjEnv,
+        jstring bucketName,
+        jobject callbackObject) {
+    const char *bucket_name = env->GetStringUTFChars(bucketName, NULL);
+
+    storj_env_t *storj_env = init_env(env, storjEnv);
+
+    if (!storj_env) {
+        error_callback(env, callbackObject, INIT_ENV_ERROR);
+    } else {
+        jcallback_t jcallback = {
+                .callbackObject = env->NewGlobalRef(callbackObject)
+        };
+        storj_bridge_get_bucket_id(storj_env, bucket_name, &jcallback, get_bucket_id_callback);
+
+        uv_run(storj_env->loop, UV_RUN_DEFAULT);
+
+        storj_destroy_env(storj_env);
+    }
+
+    env->ReleaseStringUTFChars(bucketName, bucket_name);
+}
+
 static void create_bucket_callback(uv_work_t *work_req, int status)
 {
     assert(status == 0);
@@ -612,7 +681,7 @@ static void get_file_callback(uv_work_t *work_req, int status)
             jclass callbackClass = env->GetObjectClass(callbackObject);
             jmethodID callbackMethod = env->GetMethodID(callbackClass,
                                                         "onFileReceived",
-                                                        "[Lio/storj/libstorj/File;V");
+                                                        "(Lio/storj/libstorj/File;)V");
             env->CallVoidMethod(callbackObject, callbackMethod, fileObject);
 
             env->DeleteGlobalRef(callbackObject);
@@ -652,6 +721,79 @@ Java_io_storj_libstorj_Storj__1getFile(
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
     env->ReleaseStringUTFChars(fileId, file_id);
+}
+
+static void get_file_id_callback(uv_work_t *work_req, int status)
+{
+    assert(status == 0);
+    get_file_id_request_t *req = (get_file_id_request_t *) work_req->data;
+    jcallback_t *jcallback = (jcallback_t *) req->handle;
+    jobject callbackObject = jcallback->callbackObject;
+
+    JNIEnv *env;
+    getJNIEnv(&env);
+
+    if (env != NULL) {
+        if (req->status_code != 200) {
+            char error_message[256];
+            if (req->status_code == 404) {
+                sprintf(error_message, "Bucket id [%s] or file name [%s] does not exist",
+                        req->bucket_id, req->file_name);
+            } else if (req->status_code == 401) {
+                strcpy(error_message, "Invalid user credentials");
+            } else {
+                sprintf(error_message, "Request failed with status code: %i", req->status_code);
+            }
+            error_callback(env, callbackObject, error_message);
+        } else if (req->file_id == NULL) {
+            error_callback(env, callbackObject, "Failed to get file id");
+        } else {
+            jstring fileId = env->NewStringUTF(req->file_id);
+
+            jclass callbackClass = env->GetObjectClass(callbackObject);
+            jmethodID callbackMethod = env->GetMethodID(callbackClass,
+                                                        "onFileIdReceived",
+                                                        "(Ljava/lang/String;)V");
+            env->CallVoidMethod(callbackObject, callbackMethod, fileId);
+
+            env->DeleteGlobalRef(callbackObject);
+        }
+    }
+
+    json_object_put(req->response);
+    free(req);
+    free(work_req);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_io_storj_libstorj_Storj__1getFileId(
+        JNIEnv *env,
+        jobject /* instance */,
+        jobject storjEnv,
+        jstring bucketId,
+        jstring fileName,
+        jobject callbackObject) {
+    const char *bucket_id = env->GetStringUTFChars(bucketId, NULL);
+    const char *file_name = env->GetStringUTFChars(fileName, NULL);
+
+    storj_env_t *storj_env = init_env(env, storjEnv);
+
+    if (!storj_env) {
+        error_callback(env, callbackObject, INIT_ENV_ERROR);
+    } else {
+        jcallback_t jcallback = {
+                .callbackObject = env->NewGlobalRef(callbackObject)
+        };
+        storj_bridge_get_file_id(storj_env, bucket_id, file_name, &jcallback, get_file_id_callback);
+
+        uv_run(storj_env->loop, UV_RUN_DEFAULT);
+
+        storj_destroy_env(storj_env);
+    }
+
+    env->ReleaseStringUTFChars(bucketId, bucket_id);
+    env->ReleaseStringUTFChars(fileName, file_name);
 }
 
 static void download_file_progress_callback(double progress, uint64_t bytes, uint64_t total_bytes, void *handle)
