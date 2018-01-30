@@ -233,8 +233,13 @@ public class StorjTest {
     }
 
     @Test
-    public void testVerifyKeys() {
+    public void testVerifyCredentials() throws InterruptedException {
         storj.verifyKeys("myuser", "mypass");
+    }
+
+    @Test
+    public void testVerifyKeys() throws InterruptedException {
+        storj.verifyKeys(new Keys("myuser", "mypass", "mymnemonic"));
     }
 
     @Test

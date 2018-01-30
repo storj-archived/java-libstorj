@@ -662,7 +662,7 @@ public class Storj {
     }
 
     /**
-     * Verifies if the provided keys are valid.
+     * Verifies if the provided credentials are valid.
      * 
      * <p>
      * This will try to list the buckets with the provided user and password. It
@@ -673,34 +673,89 @@ public class Storj {
      *            the user's email
      * @param pass
      *            the user's password
-     * @return <code>true</code> if the user and password match, <code>false</code>
-     *         otherwise
+     * @return {@link #NO_ERROR} if the user and password match;
+     *         {@link #HTTP_UNAUTHORIZED} if the credentials are invalid; or other
+     *         error codes due to network issues.
+     * @throws InterruptedException
+     *             if the request was interrupted
      */
-    public boolean verifyKeys(String user, String pass) {
+    public int verifyKeys(String user, String pass) throws InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
-        final boolean[] result = { false };
+        final int[] result = { NO_ERROR };
 
         _getBuckets(new Environment(user, pass), new GetBucketsCallback() {
             @Override
             public void onBucketsReceived(Bucket[] buckets) {
-                result[0] = true;
+                // success
                 latch.countDown();
             }
 
             @Override
             public void onError(int code, String message) {
-                // TODO better error handling to determine if error is due to authentication error or network error
-                result[0] = false;
+                result[0] = code;
                 latch.countDown();
             }
         });
 
-        try {
-            latch.await();
-        } catch (InterruptedException e) {
-            // TODO better error handling
-            result[0] = false;
-        }
+        latch.await();
+
+        return result[0];
+    }
+
+    /**
+     * Verifies if the provided keys (user, password and mnemonic) are valid.
+     * 
+     * <p>
+     * This will try to list the buckets and decrypt their metadata with the
+     * provided keys. It will block until the response is received.
+     * </p>
+     * 
+     * @param keys
+     *            the user's keys
+     * @return {@link #NO_ERROR} if the user and password match, and the mnemonic
+     *         can decrypt the metadata; {@link #HTTP_UNAUTHORIZED} if the
+     *         credentials are invalid; {@link #STORJ_FILE_DECRYPTION_ERROR} if the
+     *         user and password match, but the mnemonic could not decrypt any
+     *         metadata; or other error codes due to network issues.
+     * @throws InterruptedException
+     *             if the request was interrupted
+     */
+    public int verifyKeys(Keys keys) throws InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+        final int[] result = { NO_ERROR };
+
+        _getBuckets(new Environment(keys), new GetBucketsCallback() {
+            @Override
+            public void onBucketsReceived(Bucket[] buckets) {
+                boolean validMnemonic = false;
+
+                if (buckets.length == 0) {
+                    // empty account, assume valid mnemonic
+                    validMnemonic = true;
+                }
+
+                for (Bucket bucket : buckets) {
+                    if (bucket.isDecrypted()) {
+                        validMnemonic = true;
+                        break;
+                    }
+                }
+
+                if (!validMnemonic) {
+                    result[0] = STORJ_META_DECRYPTION_ERROR;
+                }
+
+                latch.countDown();
+            }
+
+            @Override
+            public void onError(int code, String message) {
+                result[0] = code;
+                latch.countDown();
+            }
+        });
+
+        latch.await();
 
         return result[0];
     }
