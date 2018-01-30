@@ -535,6 +535,19 @@ public class Storj {
      */
     public static native boolean checkMnemonic(String mnemonic);
 
+    /**
+     * Returns the error message for the given error code.
+     * 
+     * <p>
+     * Note that the <code>message</code> parameter of the <code>onError()</code>
+     * method in callbacks often provides more detailed error message than this
+     * method.
+     * </p>
+     * 
+     * @param code
+     *            the error code
+     * @return an error message
+     */
     public static String getErrorMessage(int code) {
         switch (code) {
         case HTTP_BAD_REQUEST:

@@ -337,6 +337,8 @@ public class StorjTest {
                 Storj.getErrorMessage(Storj.STORJ_MAPPING_ERROR));
         Assert.assertEquals("Memory mapped file unmap error",
                 Storj.getErrorMessage(Storj.STORJ_UNMAPPING_ERROR));
+        Assert.assertEquals("Queue error",
+                Storj.getErrorMessage(Storj.STORJ_QUEUE_ERROR));
         Assert.assertEquals("Meta encryption error",
                 Storj.getErrorMessage(Storj.STORJ_META_ENCRYPTION_ERROR));
         Assert.assertEquals("Meta decryption error",
