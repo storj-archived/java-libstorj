@@ -35,9 +35,11 @@ public interface GetBucketsCallback {
     /**
      * Called if getting the buckets list finished with error.
      * 
+     * @param code
+     *            the error code
      * @param message
      *            the error message
      */
-    void onError(String message);
+    void onError(int code, String message);
 
 }

@@ -33,9 +33,11 @@ public interface DeleteFileCallback {
     /**
      * Called if deleting the file finished with error.
      * 
+     * @param code
+     *            the error code
      * @param message
      *            the error message
      */
-    void onError(String message);
+    void onError(int code, String message);
 
 }

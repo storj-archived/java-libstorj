@@ -23,7 +23,19 @@
 #include <direct.h>
 #endif
 
-#define INIT_ENV_ERROR "Failed to initialize Storj environment"
+#define INIT_ENV_ERROR_CODE     900
+#define INIT_ENV_ERROR_MSG      "Failed to initialize Storj environment"
+
+#define INIT_ENV_ERROR()        error_callback(env, callbackObject, INIT_ENV_ERROR_CODE, INIT_ENV_ERROR_MSG)
+#define INIT_ENV_ERROR_ARG(arg) error_callback(env, callbackObject, arg, INIT_ENV_ERROR_CODE, INIT_ENV_ERROR_MSG)
+
+#define HANDLE_ERROR();         if (req->error_code) {                                                                                    \
+                                    error_callback(env, callbackObject, req->error_code, curl_easy_strerror((CURLcode) req->error_code)); \
+                                } else {                                                                                                  \
+                                    struct json_object *error;                                                                            \
+                                    json_object_object_get_ex(req->response, "error", &error);                                            \
+                                    error_callback(env, callbackObject, req->status_code, json_object_get_string(error));                 \
+                                }
 
 JavaVM* jvm;
 
@@ -72,24 +84,26 @@ typedef struct {
     jstring filePath;
 } jupload_callback_t;
 
-static void error_callback(JNIEnv *env, jobject callbackObject, const char *message) {
+static void error_callback(JNIEnv *env, jobject callbackObject, int code, const char *message) {
     jclass callbackClass = env->GetObjectClass(callbackObject);
     jmethodID callbackMethod = env->GetMethodID(callbackClass,
                                                 "onError",
-                                                "(Ljava/lang/String;)V");
+                                                "(ILjava/lang/String;)V");
     env->CallVoidMethod(callbackObject,
                         callbackMethod,
+                        code,
                         env->NewStringUTF(message));
 }
 
-static void error_callback(JNIEnv *env, jobject callbackObject, jstring arg, const char *message) {
+static void error_callback(JNIEnv *env, jobject callbackObject, jstring arg, int code, const char *message) {
     jclass callbackClass = env->GetObjectClass(callbackObject);
     jmethodID callbackMethod = env->GetMethodID(callbackClass,
                                                 "onError",
-                                                "(Ljava/lang/String;Ljava/lang/String;)V");
+                                                "(Ljava/lang/String;ILjava/lang/String;)V");
     env->CallVoidMethod(callbackObject,
                         callbackMethod,
                         arg,
+                        code,
                         env->NewStringUTF(message));
 }
 
@@ -191,13 +205,7 @@ static void get_buckets_callback(uv_work_t *work_req, int status)
 
     if (env != NULL) {
         if (req->status_code != 200 && req->status_code != 304) {
-            char error_message[256];
-            if (req->status_code == 401) {
-                strcpy(error_message, "Invalid user credentials");
-            } else {
-                sprintf(error_message, "Request failed with status code: %i", req->status_code);
-            }
-            error_callback(env, callbackObject, error_message);
+            HANDLE_ERROR();
         } else {
             jclass bucketClass = env->FindClass("io/storj/libstorj/Bucket");
             jobjectArray bucketArray = env->NewObjectArray(req->total_buckets, bucketClass, NULL);
@@ -250,7 +258,7 @@ Java_io_storj_libstorj_Storj__1getBuckets(
     storj_env_t *storj_env = init_env(env, storjEnv);
 
     if (!storj_env) {
-        error_callback(env, callbackObject, INIT_ENV_ERROR);
+        INIT_ENV_ERROR();
     } else {
         jcallback_t jcallback = {
                 .callbackObject = env->NewGlobalRef(callbackObject)
@@ -275,18 +283,7 @@ static void get_bucket_callback(uv_work_t *work_req, int status)
 
     if (env != NULL) {
         if (req->status_code != 200) {
-            char error_message[256];
-            char *bucket_id = strrchr(req->path, '/') + 1;
-            if (req->status_code == 404) {
-                sprintf(error_message, "Bucket id [%s] does not exist", bucket_id);
-            } else if (req->status_code == 400) {
-                sprintf(error_message, "Bucket id [%s] is invalid", bucket_id);
-            } else if (req->status_code == 401) {
-                strcpy(error_message, "Invalid user credentials");
-            } else {
-                sprintf(error_message, "Failed to retrieve bucket. (%i)", req->status_code);
-            }
-            error_callback(env, callbackObject, error_message);
+            HANDLE_ERROR();
         } else {
             jclass bucketClass = env->FindClass("io/storj/libstorj/Bucket");
             jmethodID bucketInit = env->GetMethodID(bucketClass,
@@ -330,7 +327,7 @@ Java_io_storj_libstorj_Storj__1getBucket(
     storj_env_t *storj_env = init_env(env, storjEnv);
 
     if (!storj_env) {
-        error_callback(env, callbackObject, INIT_ENV_ERROR);
+        INIT_ENV_ERROR();
     } else {
         jcallback_t jcallback = {
                 .callbackObject = env->NewGlobalRef(callbackObject)
@@ -357,17 +354,9 @@ static void get_bucket_id_callback(uv_work_t *work_req, int status)
 
     if (env != NULL) {
         if (req->status_code != 200) {
-            char error_message[256];
-            if (req->status_code == 404) {
-                sprintf(error_message, "Cannot get id for bucket with name [%s]. Name does not exist.", req->bucket_name);
-            } else if (req->status_code == 401) {
-                strcpy(error_message, "Invalid user credentials");
-            } else {
-                sprintf(error_message, "Request failed with status code: %i", req->status_code);
-            }
-            error_callback(env, callbackObject, error_message);
+            HANDLE_ERROR();
         } else if (req->bucket_id == NULL) {
-            error_callback(env, callbackObject, "Failed to get bucket id");
+            error_callback(env, callbackObject, STORJ_BRIDGE_JSON_ERROR, "No bucket id in the response");
         } else {
             jstring bucketId = env->NewStringUTF(req->bucket_id);
 
@@ -399,7 +388,7 @@ Java_io_storj_libstorj_Storj__1getBucketId(
     storj_env_t *storj_env = init_env(env, storjEnv);
 
     if (!storj_env) {
-        error_callback(env, callbackObject, INIT_ENV_ERROR);
+        INIT_ENV_ERROR();
     } else {
         jcallback_t jcallback = {
                 .callbackObject = env->NewGlobalRef(callbackObject)
@@ -426,16 +415,7 @@ static void create_bucket_callback(uv_work_t *work_req, int status)
 
     if (env != NULL) {
         if (req->status_code != 201) {
-            char error_message[256];
-            if (req->status_code == 404) {
-                sprintf(error_message, "Cannot create bucket [%s]. Name already exists.",
-                        req->bucket->name);
-            } else if (req->status_code == 401) {
-                strcpy(error_message, "Invalid user credentials");
-            } else {
-                sprintf(error_message, "Request failed with status code: %i", req->status_code);
-            }
-            error_callback(env, callbackObject, error_message);
+            HANDLE_ERROR();
         } else {
             jclass bucketClass = env->FindClass("io/storj/libstorj/Bucket");
             jmethodID bucketInit = env->GetMethodID(bucketClass,
@@ -482,7 +462,7 @@ Java_io_storj_libstorj_Storj__1createBucket(
     storj_env_t *storj_env = init_env(env, storjEnv);
 
     if (!storj_env) {
-        error_callback(env, callbackObject, INIT_ENV_ERROR);
+        INIT_ENV_ERROR();
     } else {
         jcallback_t jcallback = {
                 .callbackObject = env->NewGlobalRef(callbackObject)
@@ -509,17 +489,7 @@ static void list_files_callback(uv_work_t *work_req, int status)
 
     if (env != NULL) {
         if (req->status_code != 200) {
-            char error_message[256];
-            if (req->status_code == 404) {
-                sprintf(error_message, "Bucket id [%s] does not exist", req->bucket_id);
-            } else if (req->status_code == 400) {
-                sprintf(error_message, "Bucket id [%s] is invalid", req->bucket_id);
-            } else if (req->status_code == 401) {
-                strcpy(error_message, "Invalid user credentials");
-            } else {
-                sprintf(error_message, "Request failed with status code: %i", req->status_code);
-            }
-            error_callback(env, callbackObject, error_message);
+            HANDLE_ERROR();
         } else {
             jclass fileClass = env->FindClass("io/storj/libstorj/File");
             jobjectArray fileArray = env->NewObjectArray(req->total_files, fileClass, NULL);
@@ -607,7 +577,7 @@ Java_io_storj_libstorj_Storj__1listFiles(
     storj_env_t *storj_env = init_env(env, storjEnv);
 
     if (!storj_env) {
-        error_callback(env, callbackObject, INIT_ENV_ERROR);
+        INIT_ENV_ERROR();
     } else {
         jcallback_t jcallback = {
                 .callbackObject = env->NewGlobalRef(callbackObject)
@@ -634,19 +604,7 @@ static void get_file_callback(uv_work_t *work_req, int status)
 
     if (env != NULL) {
         if (req->status_code != 200) {
-            char error_message[256];
-            if (req->status_code == 404) {
-                sprintf(error_message, "Bucket id [%s] or file id [%s] does not exist",
-                        req->bucket_id, req->file->id);
-            } else if (req->status_code == 400) {
-                sprintf(error_message, "Bucket id [%s] or file id [%s] is invalid", req->bucket_id,
-                        req->file->id);
-            } else if (req->status_code == 401) {
-                strcpy(error_message, "Invalid user credentials");
-            } else {
-                sprintf(error_message, "Request failed with status code: %i", req->status_code);
-            }
-            error_callback(env, callbackObject, error_message);
+            HANDLE_ERROR();
         } else {
             jclass fileClass = env->FindClass("io/storj/libstorj/File");
             jmethodID fileInit = env->GetMethodID(fileClass,
@@ -707,7 +665,7 @@ Java_io_storj_libstorj_Storj__1getFile(
     storj_env_t *storj_env = init_env(env, storjEnv);
 
     if (!storj_env) {
-        error_callback(env, callbackObject, INIT_ENV_ERROR);
+        INIT_ENV_ERROR();
     } else {
         jcallback_t jcallback = {
                 .callbackObject = env->NewGlobalRef(callbackObject)
@@ -735,18 +693,9 @@ static void get_file_id_callback(uv_work_t *work_req, int status)
 
     if (env != NULL) {
         if (req->status_code != 200) {
-            char error_message[256];
-            if (req->status_code == 404) {
-                sprintf(error_message, "Bucket id [%s] or file name [%s] does not exist",
-                        req->bucket_id, req->file_name);
-            } else if (req->status_code == 401) {
-                strcpy(error_message, "Invalid user credentials");
-            } else {
-                sprintf(error_message, "Request failed with status code: %i", req->status_code);
-            }
-            error_callback(env, callbackObject, error_message);
+            HANDLE_ERROR();
         } else if (req->file_id == NULL) {
-            error_callback(env, callbackObject, "Failed to get file id");
+            error_callback(env, callbackObject, STORJ_BRIDGE_JSON_ERROR, "No file id in the response");
         } else {
             jstring fileId = env->NewStringUTF(req->file_id);
 
@@ -780,7 +729,7 @@ Java_io_storj_libstorj_Storj__1getFileId(
     storj_env_t *storj_env = init_env(env, storjEnv);
 
     if (!storj_env) {
-        error_callback(env, callbackObject, INIT_ENV_ERROR);
+        INIT_ENV_ERROR();
     } else {
         jcallback_t jcallback = {
                 .callbackObject = env->NewGlobalRef(callbackObject)
@@ -837,9 +786,7 @@ static void download_file_complete_callback(int status, FILE *fd, void *handle)
 
     if (env != NULL) {
         if (status) {
-            char error_message[256];
-            sprintf(error_message, "Download failed. %s (%d)", storj_strerror(status), status);
-            error_callback(env, callbackObject, cb_extension->fileId, error_message);
+            error_callback(env, callbackObject, cb_extension->fileId, status, storj_strerror(status));
         } else {
             jclass callbackClass = env->GetObjectClass(callbackObject);
             jmethodID callbackMethod = env->GetMethodID(callbackClass,
@@ -904,7 +851,7 @@ Java_io_storj_libstorj_Storj__1downloadFile(
     storj_env_t *storj_env = init_env(env, storjEnv);
 
     if (!storj_env) {
-        error_callback(env, callbackObject, fileId, INIT_ENV_ERROR);
+        INIT_ENV_ERROR_ARG(fileId);
     } else {
         jcallback_t jcallback = {
                 .callbackObject = env->NewGlobalRef(callbackObject)
@@ -919,20 +866,13 @@ Java_io_storj_libstorj_Storj__1downloadFile(
         FILE *fd = NULL;
 
         if (path) {
-            if (access(path, F_OK) != -1) {
-                // TODO ask user if file should be overwritten
-                unlink(path);
-            }
-
-            fd = fopen(path, "w+");
+            fd = fopen(path, "w");
         }
 
         if (fd == NULL) {
-            char error_message[256];
-            sprintf(error_message, "Unable to open %s: %s", path, strerror(errno));
-            error_callback(env, callbackObject, fileId, error_message);
+            error_callback(env, callbackObject, fileId, -errno, strerror(errno));
         } else if (download_file(fd, bucket_id, file_id, storj_env, &cb_extension)) {
-            error_callback(env, callbackObject, fileId, "Can't allocate memory");
+            error_callback(env, callbackObject, fileId, STORJ_MEMORY_ERROR, storj_strerror(STORJ_MEMORY_ERROR));
         } else {
             uv_run(storj_env->loop, UV_RUN_DEFAULT);
         }
@@ -984,9 +924,7 @@ static void upload_file_complete_callback(int status, storj_file_meta_t *file, v
 
     if (env != NULL) {
         if (status) {
-            char error_message[256];
-            sprintf(error_message, "Upload failed. %s (%d)", storj_strerror(status), status);
-            error_callback(env, callbackObject, cb_extension->filePath, error_message);
+            error_callback(env, callbackObject, cb_extension->filePath, status, storj_strerror(status));
         } else {
             jclass fileClass = env->FindClass("io/storj/libstorj/File");
             jmethodID fileInit = env->GetMethodID(fileClass,
@@ -1087,7 +1025,7 @@ Java_io_storj_libstorj_Storj__1uploadFile(
     storj_env_t *storj_env = init_env(env, storjEnv);
 
     if (!storj_env) {
-        error_callback(env, callbackObject, localPath, INIT_ENV_ERROR);
+        INIT_ENV_ERROR_ARG(localPath);
     } else {
         jcallback_t jcallback = {
                 .callbackObject = env->NewGlobalRef(callbackObject)
@@ -1101,9 +1039,9 @@ Java_io_storj_libstorj_Storj__1uploadFile(
         FILE *fd = fopen(local_path, "r");
 
         if (!fd) {
-            error_callback(env, callbackObject, localPath, "Can't read file");
+            error_callback(env, callbackObject, localPath, -errno, strerror(errno));
         } else if (upload_file(fd, bucket_id, file_name, storj_env, &cb_extension)) {
-            error_callback(env, callbackObject, localPath, "Can't allocate memory");
+            error_callback(env, callbackObject, localPath, STORJ_MEMORY_ERROR, storj_strerror(STORJ_MEMORY_ERROR));
         } else {
             uv_run(storj_env->loop, UV_RUN_DEFAULT);
         }
@@ -1128,13 +1066,7 @@ static void delete_bucket_callback(uv_work_t *work_req, int status)
 
     if (env != NULL) {
         if (req->status_code != 200 && req->status_code != 204) {
-            char error_message[256];
-            if (req->status_code == 401) {
-                strcpy(error_message, "Invalid user credentials");
-            } else {
-                sprintf(error_message, "Failed to destroy bucket. (%i)", req->status_code);
-            }
-            error_callback(env, callbackObject, error_message);
+            HANDLE_ERROR();
         } else {
             jclass callbackClass = env->GetObjectClass(callbackObject);
             jmethodID callbackMethod = env->GetMethodID(callbackClass, "onBucketDeleted", "()V");
@@ -1164,7 +1096,7 @@ Java_io_storj_libstorj_Storj__1deleteBucket(
     storj_env_t *storj_env = init_env(env, storjEnv);
 
     if (!storj_env) {
-        error_callback(env, callbackObject, INIT_ENV_ERROR);
+        INIT_ENV_ERROR();
     } else {
         jcallback_t jcallback = {
                 .callbackObject = env->NewGlobalRef(callbackObject)
@@ -1191,13 +1123,7 @@ static void delete_file_callback(uv_work_t *work_req, int status)
 
     if (env != NULL) {
         if (req->status_code != 200 && req->status_code != 204) {
-            char error_message[256];
-            if (req->status_code == 401) {
-                strcpy(error_message, "Invalid user credentials");
-            } else {
-                sprintf(error_message, "Failed to remove file from bucket. (%i)", req->status_code);
-            }
-            error_callback(env, callbackObject, error_message);
+            HANDLE_ERROR();
         } else {
             jclass callbackClass = env->GetObjectClass(callbackObject);
             jmethodID callbackMethod = env->GetMethodID(callbackClass, "onFileDeleted", "()V");
@@ -1229,7 +1155,7 @@ Java_io_storj_libstorj_Storj__1deleteFile(
     storj_env_t *storj_env = init_env(env, storjEnv);
 
     if (!storj_env) {
-        error_callback(env, callbackObject, INIT_ENV_ERROR);
+        INIT_ENV_ERROR();
     } else {
         jcallback_t jcallback = {
                 .callbackObject = env->NewGlobalRef(callbackObject)
@@ -1257,14 +1183,7 @@ static void register_callback(uv_work_t *work_req, int status)
 
     if (env != NULL) {
         if (req->status_code != 201) {
-            struct json_object *error;
-            json_object_object_get_ex(req->response, "error", &error);
-            char error_message[256];
-            sprintf(error_message,
-                    "Request failed with status code: %i. Error: %s",
-                    req->status_code,
-                    json_object_get_string(error));
-            error_callback(env, callbackObject, error_message);
+            HANDLE_ERROR();
         } else {
             struct json_object *email;
             json_object_object_get_ex(req->response, "email", &email);
@@ -1297,7 +1216,7 @@ Java_io_storj_libstorj_Storj__1register(
     storj_env_t *storj_env = init_env(env, storjEnv);
 
     if (!storj_env) {
-        error_callback(env, callbackObject, INIT_ENV_ERROR);
+        INIT_ENV_ERROR();
     } else {
         jcallback_t jcallback = {
                 .callbackObject = env->NewGlobalRef(callbackObject)
@@ -1325,15 +1244,8 @@ static void get_info_callback(uv_work_t *work_req, int status)
     getJNIEnv(&env);
 
     if (env != NULL) {
-        if (req->error_code || req->response == NULL) {
-            char error_message[256];
-            if (req->error_code) {
-                sprintf(error_message, "Request failed, reason: %s",
-                        curl_easy_strerror((CURLcode) req->error_code));
-            } else {
-                strcpy(error_message, "Failed to get info.");
-            }
-            error_callback(env, callbackObject, error_message);
+        if (req->status_code != 200) {
+            HANDLE_ERROR();
         } else {
             struct json_object *info;
             json_object_object_get_ex(req->response, "info", &info);
@@ -1376,7 +1288,7 @@ Java_io_storj_libstorj_Storj__1getInfo(
     storj_env_t *storj_env = init_env(env, storjEnv);
 
     if (!storj_env) {
-        error_callback(env, callbackObject, INIT_ENV_ERROR);
+        INIT_ENV_ERROR();
     } else {
         jcallback_t jcallback = {
                 .callbackObject = env->NewGlobalRef(callbackObject)
@@ -1455,6 +1367,25 @@ Java_io_storj_libstorj_Storj__1writeAuthFile(
     env->ReleaseStringUTFChars(passphrase_, passphrase);
 
     return (jboolean) (result == 0);
+}
+
+extern "C"
+JNIEXPORT jstring JNICALL
+Java_io_storj_libstorj_Storj__1getErrorMessage(
+        JNIEnv *env,
+        jclass /* clazz */,
+        jint code) {
+    const char *msg = NULL;
+
+    if (code < 0) {
+        msg = strerror(-code);
+    } else if (code > 0 && code < 100) {
+        msg = curl_easy_strerror((CURLcode) code);
+    } else {
+        msg = storj_strerror(code);
+    }
+
+    return env->NewStringUTF(msg);
 }
 
 extern "C"

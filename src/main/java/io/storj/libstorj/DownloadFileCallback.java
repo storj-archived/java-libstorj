@@ -56,9 +56,11 @@ public interface DownloadFileCallback {
      * 
      * @param fileId
      *            the id of the file being downloaded
+     * @param code
+     *            the error code
      * @param message
      *            the error message
      */
-    void onError(String fileId, String message);
+    void onError(String fileId, int code, String message);
 
 }

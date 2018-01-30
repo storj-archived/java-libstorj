@@ -57,9 +57,11 @@ public interface UploadFileCallback {
      * 
      * @param filePath
      *            the local path (including file name) of the file being uploaded
+     * @param code
+     *            the error code
      * @param message
      *            the error message
      */
-    void onError(String filePath, String message);
+    void onError(String filePath, int code, String message);
 
 }

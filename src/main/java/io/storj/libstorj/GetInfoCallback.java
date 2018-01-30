@@ -43,9 +43,11 @@ public interface GetInfoCallback {
      * Called when the {@link Storj#getInfo(GetInfoCallback)} method finishes with
      * error.
      * 
+     * @param code
+     *            the error code
      * @param message
      *            the error message
      */
-    void onError(String message);
+    void onError(int code, String message);
 
 }

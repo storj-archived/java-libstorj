@@ -28,6 +28,332 @@ import java.util.concurrent.CountDownLatch;
  */
 public class Storj {
 
+    /**
+     * Error code for "No such file or directory" error that occured on the local
+     * file system.
+     * 
+     * <p>
+     * This error code is usually returned on upload and download operations. For
+     * example, if the file to be uploaded does not exist, or the directory to save
+     * the downloaded file does not exist.
+     * </p>
+     */
+    public static final int ENOENT = -2;
+
+    /**
+     * Error code for "Permission denied" error that occured on the local file
+     * system.
+     * 
+     * <p>
+     * This error code is usually returned on upload and download operations. For
+     * example, if the file to be uploaded cannot be accessed due to insufficient
+     * permissions, or there are not enough permissions to save the downloaded file
+     * to the selected directory.
+     * </p>
+     */
+    public static final int EACCES = -13;
+
+    /**
+     * Error code if there is no error.
+     */
+    public static final int NO_ERROR = 0;
+
+    /**
+     * Error code if the Bridge URL uses protocol that is not supported.
+     */
+    public static final int CURLE_UNSUPPORTED_PROTOCOL = 1;
+
+    /**
+     * Error code if the Bridge URL is not properly formatted.
+     */
+    public static final int CURLE_URL_MALFORMAT = 3;
+
+    /**
+     * Error code if the given proxy host could not be resolved.
+     */
+    public static final int CURLE_COULDNT_RESOLVE_PROXY = 5;
+
+    /**
+     * Error code if the Bridge host could not be resolved.
+     */
+    public static final int CURLE_COULDNT_RESOLVE_HOST = 6;
+
+    /**
+     * Error code if failed to connect to the Bridge server or to the proxy.
+     */
+    public static final int CURLE_COULDNT_CONNECT = 7;
+
+    /**
+     * Error code if a memory allocation request failed in the libcurl native
+     * library.
+     */
+    public static final int CURLE_OUT_OF_MEMORY = 27;
+
+    /**
+     * Error code if a network operation timed out.
+     */
+    public static final int CURLE_OPERATION_TIMEDOUT = 28;
+    
+    /**
+     * Error code if an invalid request was sent to the Bridge.
+     * 
+     * <p>
+     * For example, if a malformed bucket id or file id is provided in the request.
+     * </p>
+     */
+    public static final int HTTP_BAD_REQUEST = 400;
+
+    /**
+     * Error code if the Bridge was requested with invalid credentials.
+     */
+    public static final int HTTP_UNAUTHORIZED = 401;
+
+    /**
+     * Error code if the requested resource from the Bridge did not exist.
+     * 
+     * <p>
+     * For example, if a bucket with the given id (which is not malformed) does not
+     * exist.
+     * </p>
+     */
+    public static final int HTTP_NOT_FOUND = 404;
+
+    /**
+     * Error code if a resource could not be created due to conflict.
+     * 
+     * <p>
+     * For example, if a resource with the same name already exists.
+     * </p>
+     */
+    public static final int HTTP_CONFLICT = 409;
+
+    /**
+     * Error code if the transfer rate limit for this account was reached.
+     */
+    public static final int HTTP_TRANSFER_RATE_LIMIT = 420;
+
+    /**
+     * Error code if the request rate limit for this account was reached.
+     */
+    public static final int HTTP_TOO_MANY_REQUESTS = 429;
+
+    /**
+     * Error code if an internal server error occured on the Bridge.
+     */
+    public static final int HTTP_INTERNAL_SERVER_ERROR = 500;
+
+    /**
+     * Error code if the Storj network is temporarily overloaded.
+     * 
+     * <p>
+     * For example, if the Bridge could not establish a contract for a shard within
+     * a specific period of time.
+     * </p>
+     */
+    public static final int HTTP_SERVICE_UNAVAILABLE = 503;
+
+    /**
+     * Error code if the Storj environment could not be initialized.
+     * 
+     * <p>
+     * Most probably due to memory allocation issues.
+     * </p>
+     */
+    public static final int STORJ_ENV_INIT_ERROR = 900;
+
+    /**
+     * Error code for general error with requesting the Bridge during a download and
+     * upload operations.
+     */
+    public static final int STORJ_BRIDGE_REQUEST_ERROR = 1000;
+
+    /**
+     * Error code if a download or upload operation was requested with invalid
+     * credentials.
+     */
+    public static final int STORJ_BRIDGE_AUTH_ERROR = 1001;
+
+    /**
+     * Error code if failed to request a token during a download or upload
+     * operation.
+     */
+    public static final int STORJ_BRIDGE_TOKEN_ERROR = 1002;
+
+    /**
+     * Error code if a request to the Bridge timed out during a download or upload
+     * operation.
+     */
+    public static final int STORJ_BRIDGE_TIMEOUT_ERROR = 1003;
+
+    /**
+     * Error code if an Internal Server Error (500) occured on the Bridge during a
+     * download or upload operation.
+     */
+    public static final int STORJ_BRIDGE_INTERNAL_ERROR = 1004;
+
+    /**
+     * Error code if a Transfer Rate Limit (420) or Request Rate Limit (429) error
+     * occured on the Bridge during a download or upload operation.
+     */
+    public static final int STORJ_BRIDGE_RATE_ERROR = 1005;
+
+    /**
+     * Error code if an attempt was made to upload a file to a bucket that does not
+     * exist.
+     */
+    public static final int STORJ_BRIDGE_BUCKET_NOTFOUND_ERROR = 1006;
+
+    /**
+     * Error code if an attempt was made to download a file that does not exist.
+     */
+    public static final int STORJ_BRIDGE_FILE_NOTFOUND_ERROR = 1007;
+
+    /**
+     * Error code if the Bridge returned an unexpected JSON response.
+     */
+    public static final int STORJ_BRIDGE_JSON_ERROR = 1008;
+
+    /**
+     * Error code if the Bridge failed to request a frame during file upload.
+     */
+    public static final int STORJ_BRIDGE_FRAME_ERROR = 1009;
+
+    /**
+     * Error code if the Bridge failed to request the pointers to the file being
+     * downloaded.
+     */
+    public static final int STORJ_BRIDGE_POINTER_ERROR = 1010;
+
+    /**
+     * Error code if the Bridge failed to replace a pointer to the file being
+     * downloaded.
+     */
+    public static final int STORJ_BRIDGE_REPOINTER_ERROR = 1011;
+
+    /**
+     * Error code if the Bridge failed to get the metainfo about the file being
+     * downloaded.
+     */
+    public static final int STORJ_BRIDGE_FILEINFO_ERROR = 1012;
+
+    /**
+     * Error code if a file with the same name as the file being uploaded already
+     * exists in the bucket.
+     */
+    public static final int STORJ_BRIDGE_BUCKET_FILE_EXISTS = 1013;
+
+    /**
+     * Error code if the Bridge failed to receive a storage offer from the Storj
+     * network for the file being uploaded.
+     */
+    public static final int STORJ_BRIDGE_OFFER_ERROR = 1014;
+
+    /**
+     * Error code if info about the file being uploaded could not be retrieved from
+     * the local file system.
+     */
+    public static final int STORJ_FILE_INTEGRITY_ERROR = 3000;
+
+    /**
+     * Error code if failed to write the file to the local file system.
+     */
+    public static final int STORJ_FILE_WRITE_ERROR = 3001;
+
+    /**
+     * Error code if failed to encrypt the file.
+     */
+    public static final int STORJ_FILE_ENCRYPTION_ERROR = 3002;
+
+    /**
+     * Error code if the file selected for upload has invalid size.
+     */
+    public static final int STORJ_FILE_SIZE_ERROR = 3003;
+
+    /**
+     * Error code if failed to decrypt the file.
+     */
+    public static final int STORJ_FILE_DECRYPTION_ERROR = 3004;
+
+    /**
+     * Error code if failed to generate the HMAC checksum for the file.
+     */
+    public static final int STORJ_FILE_GENERATE_HMAC_ERROR = 3005;
+
+    /**
+     * Error code if error occurred while reading the file being uploaded from the
+     * local file system.
+     */
+    public static final int STORJ_FILE_READ_ERROR = 3006;
+
+    /**
+     * Error code if the file has too many missing shards to be recovered from the
+     * Storj network.
+     */
+    public static final int STORJ_FILE_SHARD_MISSING_ERROR = 3007;
+
+    /**
+     * Error code if failed to reconstruct the file from the downloaded shards.
+     */
+    public static final int STORJ_FILE_RECOVER_ERROR = 3008;
+
+    /**
+     * Error code if failed to resize the file on the local file system while shards
+     * were being downloaded.
+     */
+    public static final int STORJ_FILE_RESIZE_ERROR = 3009;
+
+    /**
+     * Error code if the file being downloaded was encrypted with unsupported
+     * erasure codes.
+     * 
+     * <p>
+     * Currently only "reedsolomon" codes are supported.
+     * </p>
+     */
+    public static final int STORJ_FILE_UNSUPPORTED_ERASURE = 3010;
+
+    /**
+     * Error code if failed to create parity shards for the file being uploaded.
+     */
+    public static final int STORJ_FILE_PARITY_ERROR = 3011;
+
+    /**
+     * Error code if a memory allocation request failed in the libstorj native
+     * library.
+     */
+    public static final int STORJ_MEMORY_ERROR = 4000;
+
+    /**
+     * Error code if failed to map the file being downloaded to memory.
+     */
+    public static final int STORJ_MAPPING_ERROR = 4001;
+
+    /**
+     * Error code if failed to unmap the file being downloaded from memory.
+     */
+    public static final int STORJ_UNMAPPING_ERROR = 4002;
+
+    /**
+     * Error code if error occurred with the event loop of the libstorj native
+     * library.
+     */
+    public static final int STORJ_QUEUE_ERROR = 5000;
+
+    /**
+     * Error code if failed to encrypt the bucket or file metadata.
+     */
+    public static final int STORJ_META_ENCRYPTION_ERROR = 6000;
+
+    /**
+     * Error code if failed to decrypt the bucket or file metadata.
+     */
+    public static final int STORJ_META_DECRYPTION_ERROR = 6001;
+
+    /**
+     * Error code if failed to generate the file key for encryption.
+     */
+    public static final int STORJ_HEX_DECODE_ERROR = 7000;
+
     private static final String DEFAULT_PROTO = "https";
     private static final String DEFAULT_HOST = "api.storj.io";
     private static final int DEFAULT_PORT = 443;
@@ -79,7 +405,7 @@ public class Storj {
      * Constructs a Storj object with default configuraton.
      * 
      * <p>
-     * It will be configured to connect to the bridge server hosted at
+     * It will be configured to connect to the Bridge hosted at
      * <code>https://api.storj.io</code>.
      * </p>
      */
@@ -88,11 +414,11 @@ public class Storj {
     }
 
     /**
-     * Constructs a Storj object to connect to a bridge server with the provided
+     * Constructs a Storj object to connect to the Bridge hosted at the provided
      * URL.
      * 
      * @param bridgeUrl
-     *            a String object with the URL of the bridge server
+     *            a String object with the Bridge URL
      * @throws MalformedURLException
      *             if the provided String represents a malformed URL
      */
@@ -101,11 +427,11 @@ public class Storj {
     }
 
     /**
-     * Constructs a Storj object to connect to a bridge server with the provided
+     * Constructs a Storj object to connect to the Bridge hosted at the provided
      * URL.
      * 
      * @param bridgeUrl
-     *            the URL of the bridge server
+     *            the Bridge URL
      */
     public Storj(URL bridgeUrl) {
         this(bridgeUrl.getProtocol(), bridgeUrl.getHost(), bridgeUrl.getPort());
@@ -115,6 +441,17 @@ public class Storj {
         proto = bridgeProtocol;
         host = bridgeHost;
         port = bridgePort;
+        
+        if (port == -1) {
+            switch (bridgeProtocol) {
+            case "http":
+                port = 80;
+                break;
+            case "https":
+                port = 443;
+                break;
+            }
+        }
 
         configDir = new java.io.File(System.getProperty("user.home"), ".storj");
         downloadDir = new java.io.File(System.getProperty("user.dir"));
@@ -185,7 +522,7 @@ public class Storj {
     public static native String generateMnemonic(int strength);
 
     /**
-     * Check that a mnemonic is valid.
+     * Checks that a mnemonic is valid.
      * 
      * <p>
      * This will check that a mnemonic has been entered correctly by verifying the
@@ -198,8 +535,33 @@ public class Storj {
      */
     public static native boolean checkMnemonic(String mnemonic);
 
+    public static String getErrorMessage(int code) {
+        switch (code) {
+        case HTTP_BAD_REQUEST:
+            return "Bad Request";
+        case HTTP_UNAUTHORIZED:
+            return "Unauthorized";
+        case HTTP_NOT_FOUND:
+            return "Not Found";
+        case HTTP_CONFLICT:
+            return "Conflict";
+        case HTTP_TRANSFER_RATE_LIMIT:
+            return "Transfer Rate Limit Reached";
+        case HTTP_TOO_MANY_REQUESTS:
+            return "Too Many Requests";
+        case HTTP_INTERNAL_SERVER_ERROR:
+            return "Internal Server Error";
+        case HTTP_SERVICE_UNAVAILABLE:
+            return "Service Unavailable";
+        case STORJ_ENV_INIT_ERROR:
+            return "Failed to initialize Storj environment";
+        default:
+            return _getErrorMessage(code);
+        }
+    }
+
     /**
-     * Returns Storj bridge API information.
+     * Returns the Storj Bridge API information.
      * 
      * @param callback
      *            an implementation of the {@link GetInfoCallback} interface to
@@ -210,7 +572,7 @@ public class Storj {
     }
 
     /**
-     * Registers a new user in the Storj bridge.
+     * Registers a new user in the Storj Bridge.
      * 
      * @param user
      *            the user's email
@@ -313,7 +675,7 @@ public class Storj {
             }
 
             @Override
-            public void onError(String message) {
+            public void onError(int code, String message) {
                 // TODO better error handling to determine if error is due to authentication error or network error
                 result[0] = false;
                 latch.countDown();
@@ -502,7 +864,7 @@ public class Storj {
      * @throws KeysNotFoundException
      *             if the user's keys have not been imported yet
      */
-    public void getFile(Bucket bucket, String fileName, GetFileIdCallback callback) throws KeysNotFoundException {
+    public void getFileId(Bucket bucket, String fileName, GetFileIdCallback callback) throws KeysNotFoundException {
         getFileId(bucket.getId(), fileName, callback);
     }
 
@@ -735,6 +1097,8 @@ public class Storj {
             throw new KeysNotFoundException();
         }
     }
+
+    private static native String _getErrorMessage(int code);
 
     private native void _getInfo(Environment env, GetInfoCallback callback);
 
