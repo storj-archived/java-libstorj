@@ -866,7 +866,7 @@ Java_io_storj_libstorj_Storj__1downloadFile(
         FILE *fd = NULL;
 
         if (path) {
-            fd = fopen(path, "w");
+            fd = fopen(path, "w+");
         }
 
         if (fd == NULL) {
