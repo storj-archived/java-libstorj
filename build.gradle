@@ -17,6 +17,8 @@ description = """Java bindings for libstorj"""
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
+def javaHome = System.getenv("JAVA_HOME")
+
 repositories {
     mavenCentral()
 }
@@ -74,8 +76,8 @@ model {
                     args << "-c"
                     args << "-Wall"
                     args << "-fPIC"
-                    args << "-I/usr/lib/jvm/java/include"
-                    args << "-I/usr/lib/jvm/java/include/linux"
+                    args << "-I${javaHome}/include"
+                    args << "-I${javaHome}/include/linux"
                 }
                 linker.withArguments { args ->
                     args << "-fPIC"
