@@ -176,7 +176,7 @@ Java_io_storj_libstorj_Storj__1initEnv(
 }
 
 extern "C"
-JNIEXPORT jlong JNICALL
+JNIEXPORT void JNICALL
 Java_io_storj_libstorj_Storj__1destroyEnv(
         JNIEnv *env,
         jobject /* instance */,
@@ -307,7 +307,7 @@ JNIEXPORT void JNICALL
 Java_io_storj_libstorj_Storj__1getBucket(
         JNIEnv *env,
         jobject /* instance */,
-        jobject storjEnv,
+        jlong storjEnv,
         jstring bucketId,
         jobject callbackObject)
 {
@@ -362,7 +362,7 @@ JNIEXPORT void JNICALL
 Java_io_storj_libstorj_Storj__1getBucketId(
         JNIEnv *env,
         jobject /* instance */,
-        jobject storjEnv,
+        jlong storjEnv,
         jstring bucketName,
         jobject callbackObject)
 {
@@ -430,7 +430,7 @@ JNIEXPORT void JNICALL
 Java_io_storj_libstorj_Storj__1createBucket(
         JNIEnv *env,
         jobject /* instance */,
-        jobject storjEnv,
+        jlong storjEnv,
         jstring bucketName,
         jobject callbackObject)
 {
@@ -539,7 +539,7 @@ JNIEXPORT void JNICALL
 Java_io_storj_libstorj_Storj__1listFiles(
         JNIEnv *env,
         jobject /* instance */,
-        jobject storjEnv,
+        jlong storjEnv,
         jstring bucketId,
         jobject callbackObject)
 {
@@ -619,7 +619,7 @@ JNIEXPORT void JNICALL
 Java_io_storj_libstorj_Storj__1getFile(
         JNIEnv *env,
         jobject /* instance */,
-        jobject storjEnv,
+        jlong storjEnv,
         jstring bucketId,
         jstring fileId,
         jobject callbackObject)
@@ -677,7 +677,7 @@ JNIEXPORT void JNICALL
 Java_io_storj_libstorj_Storj__1getFileId(
         JNIEnv *env,
         jobject /* instance */,
-        jobject storjEnv,
+        jlong storjEnv,
         jstring bucketId,
         jstring fileName,
         jobject callbackObject)
@@ -791,7 +791,7 @@ JNIEXPORT void JNICALL
 Java_io_storj_libstorj_Storj__1downloadFile(
         JNIEnv *env,
         jobject /* instance */,
-        jobject storjEnv,
+        jlong storjEnv,
         jstring bucketId,
         jstring fileId,
         jstring localPath,
@@ -959,7 +959,7 @@ JNIEXPORT void JNICALL
 Java_io_storj_libstorj_Storj__1uploadFile(
         JNIEnv *env,
         jobject /* instance */,
-        jobject storjEnv,
+        jlong storjEnv,
         jstring bucketId,
         jstring fileName,
         jstring localPath,
@@ -1079,7 +1079,7 @@ JNIEXPORT void JNICALL
 Java_io_storj_libstorj_Storj__1deleteFile(
         JNIEnv *env,
         jobject /* instance */,
-        jobject storjEnv,
+        jlong storjEnv,
         jstring bucketId,
         jstring fileId,
         jobject callbackObject)
@@ -1139,7 +1139,7 @@ JNIEXPORT void JNICALL
 Java_io_storj_libstorj_Storj__1register(
         JNIEnv *env,
         jobject /* instance */,
-        jobject storjEnv,
+        jlong storjEnv,
         jobject callbackObject)
 {
     storj_env_t *storj_env = (storj_env_t *) storjEnv;
@@ -1206,7 +1206,7 @@ JNIEXPORT void JNICALL
 Java_io_storj_libstorj_Storj__1getInfo(
         JNIEnv *env,
         jobject /* instance */,
-        jobject storjEnv,
+        jlong storjEnv,
         jobject callbackObject)
 {
     storj_env_t *storj_env = (storj_env_t *) storjEnv;
