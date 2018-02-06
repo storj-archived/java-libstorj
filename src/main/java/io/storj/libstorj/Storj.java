@@ -153,15 +153,6 @@ public class Storj {
     public static final int HTTP_SERVICE_UNAVAILABLE = 503;
 
     /**
-     * Error code if the Storj environment could not be initialized.
-     * 
-     * <p>
-     * Most probably due to memory allocation issues.
-     * </p>
-     */
-    public static final int STORJ_ENV_INIT_ERROR = 900;
-
-    /**
      * Error code for general error with requesting the Bridge during a download and
      * upload operations.
      */
@@ -367,6 +358,11 @@ public class Storj {
     private java.io.File configDir;
     private java.io.File downloadDir;
 
+    /**
+     * Pointer to the address of the storj_env_t struct in the native library.
+     */
+    private long env;
+
     static {
         loadLibrary();
 
@@ -408,6 +404,13 @@ public class Storj {
      * It will be configured to connect to the Bridge hosted at
      * <code>https://api.storj.io</code>.
      * </p>
+     * 
+     * <p>
+     * After completing the work with this object make sure to call
+     * {@link #destroy()} to release the allocated native resources.
+     * </p>
+     * 
+     * @see Storj#destroy()
      */
     public Storj() {
         this(DEFAULT_PROTO, DEFAULT_HOST, DEFAULT_PORT);
@@ -417,10 +420,16 @@ public class Storj {
      * Constructs a Storj object to connect to the Bridge hosted at the provided
      * URL.
      * 
+     * <p>
+     * After completing the work with this object make sure to call
+     * {@link #destroy()} to release the allocated native resources.
+     * </p>
+     * 
      * @param bridgeUrl
      *            a String object with the Bridge URL
      * @throws MalformedURLException
      *             if the provided String represents a malformed URL
+     * @see Storj#destroy()
      */
     public Storj(String bridgeUrl) throws MalformedURLException {
         this(new URL(bridgeUrl));
@@ -430,8 +439,14 @@ public class Storj {
      * Constructs a Storj object to connect to the Bridge hosted at the provided
      * URL.
      * 
+     * <p>
+     * After completing the work with this object make sure to call
+     * {@link #destroy()} to release the allocated native resources.
+     * </p>
+     * 
      * @param bridgeUrl
      *            the Bridge URL
+     * @see Storj#destroy()
      */
     public Storj(URL bridgeUrl) {
         this(bridgeUrl.getProtocol(), bridgeUrl.getHost(), bridgeUrl.getPort());
@@ -566,8 +581,6 @@ public class Storj {
             return "Internal Server Error";
         case HTTP_SERVICE_UNAVAILABLE:
             return "Service Unavailable";
-        case STORJ_ENV_INIT_ERROR:
-            return "Failed to initialize Storj environment";
         default:
             return _getErrorMessage(code);
         }
@@ -581,7 +594,11 @@ public class Storj {
      *            receive the response
      */
     public void getInfo(GetInfoCallback callback) {
-        _getInfo(new Environment(), callback);
+        long env = initEnv();
+
+        _getInfo(env, callback);
+
+        destroyEnv(env);
     }
 
     /**
@@ -596,7 +613,11 @@ public class Storj {
      *            receive the response
      */
     public void register(String user, String pass, RegisterCallback callback) {
-        _register(new Environment(user, pass), callback);
+        long env = initEnv(user, pass);
+
+        _register(env, callback);
+
+        destroyEnv(env);
     }
 
     /**
@@ -643,6 +664,9 @@ public class Storj {
                 passphrase);
         if (success) {
             this.keys = keys;
+            // re-init Storj env
+            destroyEnv(env);
+            env = initEnv(keys);
         }
         return success;
     }
@@ -680,10 +704,11 @@ public class Storj {
      *             if the request was interrupted
      */
     public int verifyKeys(String user, String pass) throws InterruptedException {
+        long env = initEnv(user, pass);
         final CountDownLatch latch = new CountDownLatch(1);
         final int[] result = { NO_ERROR };
 
-        _getBuckets(new Environment(user, pass), new GetBucketsCallback() {
+        _getBuckets(env, new GetBucketsCallback() {
             @Override
             public void onBucketsReceived(Bucket[] buckets) {
                 // success
@@ -696,6 +721,8 @@ public class Storj {
                 latch.countDown();
             }
         });
+
+        destroyEnv(env);
 
         latch.await();
 
@@ -721,10 +748,11 @@ public class Storj {
      *             if the request was interrupted
      */
     public int verifyKeys(Keys keys) throws InterruptedException {
+        long env = initEnv(keys);
         final CountDownLatch latch = new CountDownLatch(1);
         final int[] result = { NO_ERROR };
 
-        _getBuckets(new Environment(keys), new GetBucketsCallback() {
+        _getBuckets(env, new GetBucketsCallback() {
             @Override
             public void onBucketsReceived(Bucket[] buckets) {
                 boolean validMnemonic = false;
@@ -755,6 +783,8 @@ public class Storj {
             }
         });
 
+        destroyEnv(env);
+
         latch.await();
 
         return result[0];
@@ -770,8 +800,8 @@ public class Storj {
      *             if the user's keys have not been imported yet
      */
     public void getBuckets(GetBucketsCallback callback) throws KeysNotFoundException {
-        checkKeys();
-        _getBuckets(new Environment(), callback);
+        checkEnv();
+        _getBuckets(env, callback);
     }
 
     /**
@@ -786,8 +816,8 @@ public class Storj {
      *             if the user's keys have not been imported yet
      */
     public void getBucket(String bucketId, GetBucketCallback callback) throws KeysNotFoundException {
-        checkKeys();
-        _getBucket(new Environment(), bucketId, callback);
+        checkEnv();
+        _getBucket(env, bucketId, callback);
     }
 
     /**
@@ -802,8 +832,8 @@ public class Storj {
      *             if the user's keys have not been imported yet
      */
     public void getBucketId(String bucketName, GetBucketIdCallback callback) throws KeysNotFoundException {
-        checkKeys();
-        _getBucketId(new Environment(), bucketName, callback);
+        checkEnv();
+        _getBucketId(env, bucketName, callback);
     }
 
     /**
@@ -818,8 +848,8 @@ public class Storj {
      *             if the user's keys have not been imported yet
      */
     public void createBucket(String bucketName, CreateBucketCallback callback) throws KeysNotFoundException {
-        checkKeys();
-        _createBucket(new Environment(), bucketName, callback);
+        checkEnv();
+        _createBucket(env, bucketName, callback);
     }
 
     /**
@@ -849,8 +879,8 @@ public class Storj {
      *             if the user's keys have not been imported yet
      */
     public void deleteBucket(String bucketId, DeleteBucketCallback callback) throws KeysNotFoundException {
-        checkKeys();
-        _deleteBucket(new Environment(), bucketId, callback);
+        checkEnv();
+        _deleteBucket(env, bucketId, callback);
     }
 
     /**
@@ -880,8 +910,8 @@ public class Storj {
      *             if the user's keys have not been imported yet
      */
     public void listFiles(String bucketId, ListFilesCallback callback) throws KeysNotFoundException {
-        checkKeys();
-        _listFiles(new Environment(), bucketId, callback);
+        checkEnv();
+        _listFiles(env, bucketId, callback);
     }
 
     /**
@@ -915,8 +945,8 @@ public class Storj {
      *             if the user's keys have not been imported yet
      */
     public void getFile(String bucketId, String fileId, GetFileCallback callback) throws KeysNotFoundException {
-        checkKeys();
-        _getFile(new Environment(), bucketId, fileId, callback);
+        checkEnv();
+        _getFile(env, bucketId, fileId, callback);
     }
 
     /**
@@ -950,8 +980,8 @@ public class Storj {
      *             if the user's keys have not been imported yet
      */
     public void getFileId(String bucketId, String fileName, GetFileIdCallback callback) throws KeysNotFoundException {
-        checkKeys();
-        _getFileId(new Environment(), bucketId, fileName, callback);
+        checkEnv();
+        _getFileId(env, bucketId, fileName, callback);
     }
 
     /**
@@ -985,8 +1015,8 @@ public class Storj {
      *             if the user's keys have not been imported yet
      */
     public void deleteFile(String bucketId, String fileId, DeleteFileCallback callback) throws KeysNotFoundException {
-        checkKeys();
-        _deleteFile(new Environment(), bucketId, fileId, callback);
+        checkEnv();
+        _deleteFile(env, bucketId, fileId, callback);
     }
 
     /**
@@ -1050,8 +1080,8 @@ public class Storj {
      */
     public void downloadFile(String bucketId, String fileId, String localPath, DownloadFileCallback callback)
             throws KeysNotFoundException {
-        checkKeys();
-        _downloadFile(new Environment(), bucketId, fileId, localPath, callback);
+        checkEnv();
+        _downloadFile(env, bucketId, fileId, localPath, callback);
     }
 
     /**
@@ -1143,8 +1173,8 @@ public class Storj {
      */
     public void uploadFile(String bucketId, String fileName, String localPath, UploadFileCallback callback)
             throws KeysNotFoundException {
-        checkKeys();
-        _uploadFile(new Environment(), bucketId, fileName, localPath, callback);
+        checkEnv();
+        _uploadFile(env, bucketId, fileName, localPath, callback);
     }
 
     private java.io.File getAuthFile() throws IllegalStateException {
@@ -1166,83 +1196,87 @@ public class Storj {
         }
     }
 
+    private void checkEnv() throws KeysNotFoundException {
+        checkKeys();
+        if (env == 0) {
+            env = initEnv(keys);
+        }
+    }
+
+    private long initEnv() throws KeysNotFoundException {
+        return initEnv(new Keys(null, null, null));
+    }
+
+    private long initEnv(String user, String pass) {
+        return initEnv(new Keys(user, pass, null));
+    }
+
+    private long initEnv(Keys keys) {
+        long env = _initEnv(proto, host, port, keys.getUser(), keys.getPass(), keys.getMnemonic(), USER_AGENT, null,
+                System.getenv("STORJ_CAINFO"));
+
+        if (env == 0) {
+            throw new IllegalStateException("Failed to initialize Storj environment");
+        }
+
+        return env;
+    }
+
+    private void destroyEnv(long env) {
+        if (env != 0) {
+            _destroyEnv(env);
+        }
+    }
+
+    /**
+     * Releases the native resources allocated by the native library.
+     */
+    public void destroy() {
+        destroyEnv(env);
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        destroy();
+    }
+
     private static native String _getErrorMessage(int code);
 
-    private native void _getInfo(Environment env, GetInfoCallback callback);
+    private native long _initEnv(String proto, String host, int port, String user, String pass, String mnemonic,
+            String userAgent, String proxyUrl, String caInfoPath);
 
-    private native void _register(Environment env, RegisterCallback callback);
+    private native void _destroyEnv(long env);
+
+    private native void _getInfo(long env, GetInfoCallback callback);
+
+    private native void _register(long env, RegisterCallback callback);
 
     private native Keys _exportKeys(String location, String passphrase);
 
     private native boolean _writeAuthFile(String location, String user, String pass, String mnemonic, String passphrase);
 
-    private native void _getBuckets(Environment env, GetBucketsCallback callback);
+    private native void _getBuckets(long env, GetBucketsCallback callback);
 
-    private native void _getBucket(Environment env, String bucketId, GetBucketCallback callback);
+    private native void _getBucket(long env, String bucketId, GetBucketCallback callback);
 
-    private native void _getBucketId(Environment env, String bucketName, GetBucketIdCallback callback);
+    private native void _getBucketId(long env, String bucketName, GetBucketIdCallback callback);
 
-    private native void _createBucket(Environment env, String bucketName, CreateBucketCallback callback);
+    private native void _createBucket(long env, String bucketName, CreateBucketCallback callback);
 
-    private native void _deleteBucket(Environment env, String bucketId, DeleteBucketCallback callback);
+    private native void _deleteBucket(long env, String bucketId, DeleteBucketCallback callback);
 
-    private native void _listFiles(Environment env, String bucketId, ListFilesCallback callback);
+    private native void _listFiles(long env, String bucketId, ListFilesCallback callback);
 
-    private native void _getFile(Environment env, String bucketId, String fileId, GetFileCallback callback);
+    private native void _getFile(long env, String bucketId, String fileId, GetFileCallback callback);
 
-    private native void _getFileId(Environment env, String bucketId, String fileName, GetFileIdCallback callback);
+    private native void _getFileId(long env, String bucketId, String fileName, GetFileIdCallback callback);
 
-    private native void _deleteFile(Environment env, String bucketId, String fileId, DeleteFileCallback callback);
+    private native void _deleteFile(long env, String bucketId, String fileId, DeleteFileCallback callback);
 
-    private native void _downloadFile(Environment env, String bucketId, String fileId, String path,
+    private native void _downloadFile(long env, String bucketId, String fileId, String path,
             DownloadFileCallback callback);
 
-    private native void _uploadFile(Environment env, String bucketId, String fileName, String localPath,
+    private native void _uploadFile(long env, String bucketId, String fileName, String localPath,
             UploadFileCallback callback);
-
-    private class Environment {
-
-        String proto;
-        String host;
-        int port;
-
-        String user;
-        String pass;
-        String mnemonic;
-
-        String userAgent;
-        String proxyUrl;
-        String caInfoPath;
-        long lowSpeedLimit;
-        long lowSpeedTime;
-        long timeout;
-
-        int logLevel;
-
-        private Environment() {
-            this(keys);
-        }
-
-        private Environment(String user, String pass) {
-            this(new Keys(user, pass, null));
-        }
-
-        private Environment(Keys keys) {
-            proto = Storj.this.proto;
-            host = Storj.this.host;
-            port = Storj.this.port;
-
-            if (keys != null) {
-                user = keys.getUser();
-                pass = keys.getPass();
-                mnemonic = keys.getMnemonic();
-            }
-
-            userAgent = USER_AGENT;
-            proxyUrl = null; // TODO
-            caInfoPath = System.getenv("STORJ_CAINFO"); // TODO
-        }
-
-    }
 
 }

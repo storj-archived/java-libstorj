@@ -23,12 +23,6 @@
 #include <direct.h>
 #endif
 
-#define INIT_ENV_ERROR_CODE     900
-#define INIT_ENV_ERROR_MSG      "Failed to initialize Storj environment"
-
-#define INIT_ENV_ERROR()        error_callback(env, callbackObject, INIT_ENV_ERROR_CODE, INIT_ENV_ERROR_MSG)
-#define INIT_ENV_ERROR_ARG(arg) error_callback(env, callbackObject, arg, INIT_ENV_ERROR_CODE, INIT_ENV_ERROR_MSG)
-
 #define HANDLE_ERROR();         if (req->error_code) {                                                                                    \
                                     error_callback(env, callbackObject, req->error_code, curl_easy_strerror((CURLcode) req->error_code)); \
                                 } else {                                                                                                  \
@@ -39,7 +33,8 @@
 
 JavaVM* jvm;
 
-jint JNI_OnLoad(JavaVM* vm, void* reserved) {
+jint JNI_OnLoad(JavaVM* vm, void* reserved)
+{
     jvm = vm;
 
     JNIEnv* env;
@@ -50,7 +45,8 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     return JNI_VERSION_1_6;
 }
 
-int getJNIEnv(JNIEnv **env) {
+int getJNIEnv(JNIEnv **env)
+{
     int status = jvm->GetEnv(reinterpret_cast<void**>(env), JNI_VERSION_1_6);
     if (status == JNI_EDETACHED) {
 #ifdef __ANDROID_NDK__
@@ -84,7 +80,8 @@ typedef struct {
     jstring filePath;
 } jupload_callback_t;
 
-static void error_callback(JNIEnv *env, jobject callbackObject, int code, const char *message) {
+static void error_callback(JNIEnv *env, jobject callbackObject, int code, const char *message)
+{
     jclass callbackClass = env->GetObjectClass(callbackObject);
     jmethodID callbackMethod = env->GetMethodID(callbackClass,
                                                 "onError",
@@ -95,7 +92,8 @@ static void error_callback(JNIEnv *env, jobject callbackObject, int code, const 
                         env->NewStringUTF(message));
 }
 
-static void error_callback(JNIEnv *env, jobject callbackObject, jstring arg, int code, const char *message) {
+static void error_callback(JNIEnv *env, jobject callbackObject, jstring arg, int code, const char *message)
+{
     jclass callbackClass = env->GetObjectClass(callbackObject);
     jmethodID callbackMethod = env->GetMethodID(callbackClass,
                                                 "onError",
@@ -107,37 +105,21 @@ static void error_callback(JNIEnv *env, jobject callbackObject, jstring arg, int
                         env->NewStringUTF(message));
 }
 
-static storj_env_t *init_env(JNIEnv *env, jobject storjEnv)
+extern "C"
+JNIEXPORT jlong JNICALL
+Java_io_storj_libstorj_Storj__1initEnv(
+        JNIEnv *env,
+        jobject /* instance */,
+        jstring proto,
+        jstring host,
+        jint port,
+        jstring user,
+        jstring pass,
+        jstring mnemonic,
+        jstring userAgent,
+        jstring proxyUrl,
+        jstring caInfoPath)
 {
-    jclass envClass = env->GetObjectClass(storjEnv);
-
-    jfieldID fidUserAgent = env->GetFieldID(envClass, "userAgent", "Ljava/lang/String;");
-    jstring userAgent = (jstring) env->GetObjectField(storjEnv, fidUserAgent);
-
-    jfieldID fidProxyUrl = env->GetFieldID(envClass, "proxyUrl", "Ljava/lang/String;");
-    jstring proxyUrl = (jstring) env->GetObjectField(storjEnv, fidProxyUrl);
-
-    jfieldID fidCaInfoPath = env->GetFieldID(envClass, "caInfoPath", "Ljava/lang/String;");
-    jstring caInfoPath = (jstring) env->GetObjectField(storjEnv, fidCaInfoPath);
-
-    jfieldID fidProto = env->GetFieldID(envClass, "proto", "Ljava/lang/String;");
-    jstring proto = (jstring) env->GetObjectField(storjEnv, fidProto);
-
-    jfieldID fidHost = env->GetFieldID(envClass, "host", "Ljava/lang/String;");
-    jstring host = (jstring) env->GetObjectField(storjEnv, fidHost);
-
-    jfieldID fidPort = env->GetFieldID(envClass, "port", "I");
-    jint port = env->GetIntField(storjEnv, fidPort);
-
-    jfieldID fidUser = env->GetFieldID(envClass, "user", "Ljava/lang/String;");
-    jstring user = (jstring) env->GetObjectField(storjEnv, fidUser);
-
-    jfieldID fidPass = env->GetFieldID(envClass, "pass", "Ljava/lang/String;");
-    jstring pass = (jstring) env->GetObjectField(storjEnv, fidPass);
-
-    jfieldID fidMnemonic = env->GetFieldID(envClass, "mnemonic", "Ljava/lang/String;");
-    jstring mnemonic = (jstring) env->GetObjectField(storjEnv, fidMnemonic);
-
     storj_http_options_t http_options = {
             .user_agent = (userAgent == NULL) ? NULL : env->GetStringUTFChars(userAgent, NULL),
             .proxy_url = (proxyUrl == NULL) ? NULL : env->GetStringUTFChars(proxyUrl, NULL),
@@ -190,7 +172,18 @@ static storj_env_t *init_env(JNIEnv *env, jobject storjEnv)
     if (encrypt_options.mnemonic)
         env->ReleaseStringUTFChars(mnemonic, encrypt_options.mnemonic);
 
-    return storj_env;
+    return (jlong) storj_env;
+}
+
+extern "C"
+JNIEXPORT jlong JNICALL
+Java_io_storj_libstorj_Storj__1destroyEnv(
+        JNIEnv *env,
+        jobject /* instance */,
+        jlong storjEnv)
+{
+    storj_env_t *storj_env = (storj_env_t *) storjEnv;
+    storj_destroy_env(storj_env);
 }
 
 static void get_buckets_callback(uv_work_t *work_req, int status)
@@ -253,22 +246,17 @@ JNIEXPORT void JNICALL
 Java_io_storj_libstorj_Storj__1getBuckets(
         JNIEnv *env,
         jobject /* instance */,
-        jobject storjEnv,
-        jobject callbackObject) {
-    storj_env_t *storj_env = init_env(env, storjEnv);
+        jlong storjEnv,
+        jobject callbackObject)
+{
+    storj_env_t *storj_env = (storj_env_t *) storjEnv;
 
-    if (!storj_env) {
-        INIT_ENV_ERROR();
-    } else {
-        jcallback_t jcallback = {
-                .callbackObject = env->NewGlobalRef(callbackObject)
-        };
-        storj_bridge_get_buckets(storj_env, &jcallback, get_buckets_callback);
+    jcallback_t jcallback = {
+            .callbackObject = env->NewGlobalRef(callbackObject)
+    };
+    storj_bridge_get_buckets(storj_env, &jcallback, get_buckets_callback);
 
-        uv_run(storj_env->loop, UV_RUN_DEFAULT);
-
-        storj_destroy_env(storj_env);
-    }
+    uv_run(storj_env->loop, UV_RUN_DEFAULT);
 }
 
 static void get_bucket_callback(uv_work_t *work_req, int status)
@@ -321,23 +309,17 @@ Java_io_storj_libstorj_Storj__1getBucket(
         jobject /* instance */,
         jobject storjEnv,
         jstring bucketId,
-        jobject callbackObject) {
+        jobject callbackObject)
+{
+    storj_env_t *storj_env = (storj_env_t *) storjEnv;
     const char *bucket_id = env->GetStringUTFChars(bucketId, NULL);
 
-    storj_env_t *storj_env = init_env(env, storjEnv);
+    jcallback_t jcallback = {
+            .callbackObject = env->NewGlobalRef(callbackObject)
+    };
+    storj_bridge_get_bucket(storj_env, bucket_id, &jcallback, get_bucket_callback);
 
-    if (!storj_env) {
-        INIT_ENV_ERROR();
-    } else {
-        jcallback_t jcallback = {
-                .callbackObject = env->NewGlobalRef(callbackObject)
-        };
-        storj_bridge_get_bucket(storj_env, bucket_id, &jcallback, get_bucket_callback);
-
-        uv_run(storj_env->loop, UV_RUN_DEFAULT);
-
-        storj_destroy_env(storj_env);
-    }
+    uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
 }
@@ -382,23 +364,17 @@ Java_io_storj_libstorj_Storj__1getBucketId(
         jobject /* instance */,
         jobject storjEnv,
         jstring bucketName,
-        jobject callbackObject) {
+        jobject callbackObject)
+{
+    storj_env_t *storj_env = (storj_env_t *) storjEnv;
     const char *bucket_name = env->GetStringUTFChars(bucketName, NULL);
 
-    storj_env_t *storj_env = init_env(env, storjEnv);
+    jcallback_t jcallback = {
+            .callbackObject = env->NewGlobalRef(callbackObject)
+    };
+    storj_bridge_get_bucket_id(storj_env, bucket_name, &jcallback, get_bucket_id_callback);
 
-    if (!storj_env) {
-        INIT_ENV_ERROR();
-    } else {
-        jcallback_t jcallback = {
-                .callbackObject = env->NewGlobalRef(callbackObject)
-        };
-        storj_bridge_get_bucket_id(storj_env, bucket_name, &jcallback, get_bucket_id_callback);
-
-        uv_run(storj_env->loop, UV_RUN_DEFAULT);
-
-        storj_destroy_env(storj_env);
-    }
+    uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
     env->ReleaseStringUTFChars(bucketName, bucket_name);
 }
@@ -456,23 +432,17 @@ Java_io_storj_libstorj_Storj__1createBucket(
         jobject /* instance */,
         jobject storjEnv,
         jstring bucketName,
-        jobject callbackObject) {
+        jobject callbackObject)
+{
+    storj_env_t *storj_env = (storj_env_t *) storjEnv;
     const char *bucket_name = env->GetStringUTFChars(bucketName, NULL);
 
-    storj_env_t *storj_env = init_env(env, storjEnv);
+    jcallback_t jcallback = {
+            .callbackObject = env->NewGlobalRef(callbackObject)
+    };
+    storj_bridge_create_bucket(storj_env, bucket_name, &jcallback, create_bucket_callback);
 
-    if (!storj_env) {
-        INIT_ENV_ERROR();
-    } else {
-        jcallback_t jcallback = {
-                .callbackObject = env->NewGlobalRef(callbackObject)
-        };
-        storj_bridge_create_bucket(storj_env, bucket_name, &jcallback, create_bucket_callback);
-
-        uv_run(storj_env->loop, UV_RUN_DEFAULT);
-
-        storj_destroy_env(storj_env);
-    }
+    uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
     env->ReleaseStringUTFChars(bucketName, bucket_name);
 }
@@ -571,23 +541,17 @@ Java_io_storj_libstorj_Storj__1listFiles(
         jobject /* instance */,
         jobject storjEnv,
         jstring bucketId,
-        jobject callbackObject) {
+        jobject callbackObject)
+{
+    storj_env_t *storj_env = (storj_env_t *) storjEnv;
     const char *bucket_id = env->GetStringUTFChars(bucketId, NULL);
 
-    storj_env_t *storj_env = init_env(env, storjEnv);
+    jcallback_t jcallback = {
+            .callbackObject = env->NewGlobalRef(callbackObject)
+    };
+    storj_bridge_list_files(storj_env, bucket_id, &jcallback, list_files_callback);
 
-    if (!storj_env) {
-        INIT_ENV_ERROR();
-    } else {
-        jcallback_t jcallback = {
-                .callbackObject = env->NewGlobalRef(callbackObject)
-        };
-        storj_bridge_list_files(storj_env, bucket_id, &jcallback, list_files_callback);
-
-        uv_run(storj_env->loop, UV_RUN_DEFAULT);
-
-        storj_destroy_env(storj_env);
-    }
+    uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
 }
@@ -658,24 +622,18 @@ Java_io_storj_libstorj_Storj__1getFile(
         jobject storjEnv,
         jstring bucketId,
         jstring fileId,
-        jobject callbackObject) {
+        jobject callbackObject)
+{
+    storj_env_t *storj_env = (storj_env_t *) storjEnv;
     const char *bucket_id = env->GetStringUTFChars(bucketId, NULL);
     const char *file_id = env->GetStringUTFChars(fileId, NULL);
 
-    storj_env_t *storj_env = init_env(env, storjEnv);
+    jcallback_t jcallback = {
+            .callbackObject = env->NewGlobalRef(callbackObject)
+    };
+    storj_bridge_get_file_info(storj_env, bucket_id, file_id, &jcallback, get_file_callback);
 
-    if (!storj_env) {
-        INIT_ENV_ERROR();
-    } else {
-        jcallback_t jcallback = {
-                .callbackObject = env->NewGlobalRef(callbackObject)
-        };
-        storj_bridge_get_file_info(storj_env, bucket_id, file_id, &jcallback, get_file_callback);
-
-        uv_run(storj_env->loop, UV_RUN_DEFAULT);
-
-        storj_destroy_env(storj_env);
-    }
+    uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
     env->ReleaseStringUTFChars(fileId, file_id);
@@ -722,24 +680,18 @@ Java_io_storj_libstorj_Storj__1getFileId(
         jobject storjEnv,
         jstring bucketId,
         jstring fileName,
-        jobject callbackObject) {
+        jobject callbackObject)
+{
+    storj_env_t *storj_env = (storj_env_t *) storjEnv;
     const char *bucket_id = env->GetStringUTFChars(bucketId, NULL);
     const char *file_name = env->GetStringUTFChars(fileName, NULL);
 
-    storj_env_t *storj_env = init_env(env, storjEnv);
+    jcallback_t jcallback = {
+            .callbackObject = env->NewGlobalRef(callbackObject)
+    };
+    storj_bridge_get_file_id(storj_env, bucket_id, file_name, &jcallback, get_file_id_callback);
 
-    if (!storj_env) {
-        INIT_ENV_ERROR();
-    } else {
-        jcallback_t jcallback = {
-                .callbackObject = env->NewGlobalRef(callbackObject)
-        };
-        storj_bridge_get_file_id(storj_env, bucket_id, file_name, &jcallback, get_file_id_callback);
-
-        uv_run(storj_env->loop, UV_RUN_DEFAULT);
-
-        storj_destroy_env(storj_env);
-    }
+    uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
     env->ReleaseStringUTFChars(fileName, file_name);
@@ -843,41 +795,35 @@ Java_io_storj_libstorj_Storj__1downloadFile(
         jstring bucketId,
         jstring fileId,
         jstring localPath,
-        jobject callbackObject) {
+        jobject callbackObject)
+{
+    storj_env_t *storj_env = (storj_env_t *) storjEnv;
     const char *bucket_id = env->GetStringUTFChars(bucketId, NULL);
     const char *file_id = env->GetStringUTFChars(fileId, NULL);
     const char *path = env->GetStringUTFChars(localPath, NULL);
 
-    storj_env_t *storj_env = init_env(env, storjEnv);
+    jcallback_t jcallback = {
+            .callbackObject = env->NewGlobalRef(callbackObject)
+    };
 
-    if (!storj_env) {
-        INIT_ENV_ERROR_ARG(fileId);
+    jdownload_callback_t cb_extension = {
+            .base = jcallback,
+            .fileId = (jstring) env->NewGlobalRef(fileId),
+            .localPath = (jstring) env->NewGlobalRef(localPath)
+    };
+
+    FILE *fd = NULL;
+
+    if (path) {
+        fd = fopen(path, "w+");
+    }
+
+    if (fd == NULL) {
+        error_callback(env, callbackObject, fileId, -errno, strerror(errno));
+    } else if (download_file(fd, bucket_id, file_id, storj_env, &cb_extension)) {
+        error_callback(env, callbackObject, fileId, STORJ_MEMORY_ERROR, storj_strerror(STORJ_MEMORY_ERROR));
     } else {
-        jcallback_t jcallback = {
-                .callbackObject = env->NewGlobalRef(callbackObject)
-        };
-
-        jdownload_callback_t cb_extension = {
-                .base = jcallback,
-                .fileId = (jstring) env->NewGlobalRef(fileId),
-                .localPath = (jstring) env->NewGlobalRef(localPath)
-        };
-
-        FILE *fd = NULL;
-
-        if (path) {
-            fd = fopen(path, "w+");
-        }
-
-        if (fd == NULL) {
-            error_callback(env, callbackObject, fileId, -errno, strerror(errno));
-        } else if (download_file(fd, bucket_id, file_id, storj_env, &cb_extension)) {
-            error_callback(env, callbackObject, fileId, STORJ_MEMORY_ERROR, storj_strerror(STORJ_MEMORY_ERROR));
-        } else {
-            uv_run(storj_env->loop, UV_RUN_DEFAULT);
-        }
-
-        storj_destroy_env(storj_env);
+        uv_run(storj_env->loop, UV_RUN_DEFAULT);
     }
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
@@ -1017,36 +963,30 @@ Java_io_storj_libstorj_Storj__1uploadFile(
         jstring bucketId,
         jstring fileName,
         jstring localPath,
-        jobject callbackObject) {
+        jobject callbackObject)
+{
+    storj_env_t *storj_env = (storj_env_t *) storjEnv;
     const char *bucket_id = env->GetStringUTFChars(bucketId, NULL);
     const char *file_name = env->GetStringUTFChars(fileName, NULL);
     const char *local_path = env->GetStringUTFChars(localPath, NULL);
 
-    storj_env_t *storj_env = init_env(env, storjEnv);
+    jcallback_t jcallback = {
+            .callbackObject = env->NewGlobalRef(callbackObject)
+    };
 
-    if (!storj_env) {
-        INIT_ENV_ERROR_ARG(localPath);
+    jupload_callback_t cb_extension = {
+            .base = jcallback,
+            .filePath = (jstring) env->NewGlobalRef(localPath)
+    };
+
+    FILE *fd = fopen(local_path, "r");
+
+    if (!fd) {
+        error_callback(env, callbackObject, localPath, -errno, strerror(errno));
+    } else if (upload_file(fd, bucket_id, file_name, storj_env, &cb_extension)) {
+        error_callback(env, callbackObject, localPath, STORJ_MEMORY_ERROR, storj_strerror(STORJ_MEMORY_ERROR));
     } else {
-        jcallback_t jcallback = {
-                .callbackObject = env->NewGlobalRef(callbackObject)
-        };
-
-        jupload_callback_t cb_extension = {
-                .base = jcallback,
-                .filePath = (jstring) env->NewGlobalRef(localPath)
-        };
-
-        FILE *fd = fopen(local_path, "r");
-
-        if (!fd) {
-            error_callback(env, callbackObject, localPath, -errno, strerror(errno));
-        } else if (upload_file(fd, bucket_id, file_name, storj_env, &cb_extension)) {
-            error_callback(env, callbackObject, localPath, STORJ_MEMORY_ERROR, storj_strerror(STORJ_MEMORY_ERROR));
-        } else {
-            uv_run(storj_env->loop, UV_RUN_DEFAULT);
-        }
-
-        storj_destroy_env(storj_env);
+        uv_run(storj_env->loop, UV_RUN_DEFAULT);
     }
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
@@ -1088,25 +1028,19 @@ JNIEXPORT void JNICALL
 Java_io_storj_libstorj_Storj__1deleteBucket(
         JNIEnv *env,
         jobject /* instance */,
-        jobject storjEnv,
+        jlong storjEnv,
         jstring bucketId,
-        jobject callbackObject) {
+        jobject callbackObject)
+{
+    storj_env_t *storj_env = (storj_env_t *) storjEnv;
     const char *bucket_id = env->GetStringUTFChars(bucketId, NULL);
 
-    storj_env_t *storj_env = init_env(env, storjEnv);
+    jcallback_t jcallback = {
+            .callbackObject = env->NewGlobalRef(callbackObject)
+    };
+    storj_bridge_delete_bucket(storj_env, bucket_id, &jcallback, delete_bucket_callback);
 
-    if (!storj_env) {
-        INIT_ENV_ERROR();
-    } else {
-        jcallback_t jcallback = {
-                .callbackObject = env->NewGlobalRef(callbackObject)
-        };
-        storj_bridge_delete_bucket(storj_env, bucket_id, &jcallback, delete_bucket_callback);
-
-        uv_run(storj_env->loop, UV_RUN_DEFAULT);
-
-        storj_destroy_env(storj_env);
-    }
+    uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
 }
@@ -1148,24 +1082,18 @@ Java_io_storj_libstorj_Storj__1deleteFile(
         jobject storjEnv,
         jstring bucketId,
         jstring fileId,
-        jobject callbackObject) {
+        jobject callbackObject)
+{
+    storj_env_t *storj_env = (storj_env_t *) storjEnv;
     const char *bucket_id = env->GetStringUTFChars(bucketId, NULL);
     const char *file_id = env->GetStringUTFChars(fileId, NULL);
 
-    storj_env_t *storj_env = init_env(env, storjEnv);
+    jcallback_t jcallback = {
+            .callbackObject = env->NewGlobalRef(callbackObject)
+    };
+    storj_bridge_delete_file(storj_env, bucket_id, file_id, &jcallback, delete_file_callback);
 
-    if (!storj_env) {
-        INIT_ENV_ERROR();
-    } else {
-        jcallback_t jcallback = {
-                .callbackObject = env->NewGlobalRef(callbackObject)
-        };
-        storj_bridge_delete_file(storj_env, bucket_id, file_id, &jcallback, delete_file_callback);
-
-        uv_run(storj_env->loop, UV_RUN_DEFAULT);
-
-        storj_destroy_env(storj_env);
-    }
+    uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
     env->ReleaseStringUTFChars(fileId, file_id);
@@ -1212,25 +1140,20 @@ Java_io_storj_libstorj_Storj__1register(
         JNIEnv *env,
         jobject /* instance */,
         jobject storjEnv,
-        jobject callbackObject) {
-    storj_env_t *storj_env = init_env(env, storjEnv);
+        jobject callbackObject)
+{
+    storj_env_t *storj_env = (storj_env_t *) storjEnv;
 
-    if (!storj_env) {
-        INIT_ENV_ERROR();
-    } else {
-        jcallback_t jcallback = {
-                .callbackObject = env->NewGlobalRef(callbackObject)
-        };
-        storj_bridge_register(storj_env,
-                              storj_env->bridge_options->user,
-                              storj_env->bridge_options->pass,
-                              &jcallback,
-                              register_callback);
+    jcallback_t jcallback = {
+            .callbackObject = env->NewGlobalRef(callbackObject)
+    };
+    storj_bridge_register(storj_env,
+                          storj_env->bridge_options->user,
+                          storj_env->bridge_options->pass,
+                          &jcallback,
+                          register_callback);
 
-        uv_run(storj_env->loop, UV_RUN_DEFAULT);
-
-        storj_destroy_env(storj_env);
-    }
+    uv_run(storj_env->loop, UV_RUN_DEFAULT);
 }
 
 static void get_info_callback(uv_work_t *work_req, int status)
@@ -1284,21 +1207,16 @@ Java_io_storj_libstorj_Storj__1getInfo(
         JNIEnv *env,
         jobject /* instance */,
         jobject storjEnv,
-        jobject callbackObject) {
-    storj_env_t *storj_env = init_env(env, storjEnv);
+        jobject callbackObject)
+{
+    storj_env_t *storj_env = (storj_env_t *) storjEnv;
 
-    if (!storj_env) {
-        INIT_ENV_ERROR();
-    } else {
-        jcallback_t jcallback = {
-                .callbackObject = env->NewGlobalRef(callbackObject)
-        };
-        storj_bridge_get_info(storj_env, &jcallback, get_info_callback);
+    jcallback_t jcallback = {
+            .callbackObject = env->NewGlobalRef(callbackObject)
+    };
+    storj_bridge_get_info(storj_env, &jcallback, get_info_callback);
 
-        uv_run(storj_env->loop, UV_RUN_DEFAULT);
-
-        storj_destroy_env(storj_env);
-    }
+    uv_run(storj_env->loop, UV_RUN_DEFAULT);
 }
 
 extern "C"
@@ -1307,7 +1225,8 @@ Java_io_storj_libstorj_Storj__1exportKeys(
         JNIEnv *env,
         jobject /* instance */,
         jstring location_,
-        jstring passphrase_) {
+        jstring passphrase_)
+{
     const char *location = env->GetStringUTFChars(location_, NULL);
     const char *passphrase = env->GetStringUTFChars(passphrase_, NULL);
     char *user = NULL;

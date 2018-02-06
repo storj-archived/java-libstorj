@@ -18,6 +18,7 @@ package io.storj.libstorj;
 
 import java.net.MalformedURLException;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,6 +35,11 @@ public class StorjTest {
                 .setDownloadDirectory(new java.io.File(System.getProperty("java.io.tmpdir")));
         bucket = new Bucket("74b9ce6f3c25f772ccdaaf08", "test", null, true);
         file = new File("file-id", "74b9ce6f3c25f772ccdaaf08", "file-name", null, true, 1, null, null, null, null);
+    }
+
+    @After
+    public void cleanUp() {
+        storj.destroy();
     }
 
     @Test
@@ -280,8 +286,6 @@ public class StorjTest {
                 Storj.getErrorMessage(Storj.HTTP_INTERNAL_SERVER_ERROR));
         Assert.assertEquals("Service Unavailable",
                 Storj.getErrorMessage(Storj.HTTP_SERVICE_UNAVAILABLE));
-        Assert.assertEquals("Failed to initialize Storj environment",
-                Storj.getErrorMessage(Storj.STORJ_ENV_INIT_ERROR));
         Assert.assertEquals("Bridge request error",
                 Storj.getErrorMessage(Storj.STORJ_BRIDGE_REQUEST_ERROR));
         Assert.assertEquals("Bridge request authorization error",
