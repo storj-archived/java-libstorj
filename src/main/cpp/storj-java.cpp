@@ -16,6 +16,7 @@
  ***************************************************************************/
 #include <jni.h>
 #include <string>
+#include <cerrno>
 #include <storj.h>
 #include <nettle/version.h>
 
