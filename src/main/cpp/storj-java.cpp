@@ -24,12 +24,18 @@
 #include <direct.h>
 #endif
 
-#define HANDLE_ERROR();         if (req->error_code) {                                                                                    \
-                                    error_callback(env, callbackObject, req->error_code, curl_easy_strerror((CURLcode) req->error_code)); \
-                                } else {                                                                                                  \
-                                    struct json_object *error;                                                                            \
-                                    json_object_object_get_ex(req->response, "error", &error);                                            \
-                                    error_callback(env, callbackObject, req->status_code, json_object_get_string(error));                 \
+#define HANDLE_ERROR();         if (req->error_code) {                                              \
+                                    error_callback(env,                                             \
+                                                   callbackObject,                                  \
+                                                   10000 + req->error_code,                         \
+                                                   curl_easy_strerror((CURLcode) req->error_code)); \
+                                } else {                                                            \
+                                    struct json_object *error;                                      \
+                                    json_object_object_get_ex(req->response, "error", &error);      \
+                                    error_callback(env,                                             \
+                                                   callbackObject,                                  \
+                                                   req->status_code,                                \
+                                                   json_object_get_string(error));                  \
                                 }
 
 JavaVM* jvm;
@@ -820,7 +826,7 @@ Java_io_storj_libstorj_Storj__1downloadFile(
     }
 
     if (fd == NULL) {
-        error_callback(env, callbackObject, fileId, -errno, strerror(errno));
+        error_callback(env, callbackObject, fileId, 20000 + errno, strerror(errno));
     } else if (download_file(fd, bucket_id, file_id, storj_env, &cb_extension)) {
         error_callback(env, callbackObject, fileId, STORJ_MEMORY_ERROR, storj_strerror(STORJ_MEMORY_ERROR));
     } else {
@@ -983,7 +989,7 @@ Java_io_storj_libstorj_Storj__1uploadFile(
     FILE *fd = fopen(local_path, "r");
 
     if (!fd) {
-        error_callback(env, callbackObject, localPath, -errno, strerror(errno));
+        error_callback(env, callbackObject, localPath, 20000 + errno, strerror(errno));
     } else if (upload_file(fd, bucket_id, file_name, storj_env, &cb_extension)) {
         error_callback(env, callbackObject, localPath, STORJ_MEMORY_ERROR, storj_strerror(STORJ_MEMORY_ERROR));
     } else {
@@ -1297,12 +1303,12 @@ Java_io_storj_libstorj_Storj__1getErrorMessage(
         jint code) {
     const char *msg = NULL;
 
-    if (code < 0) {
-        msg = strerror(-code);
-    } else if (code > 0 && code < 100) {
-        msg = curl_easy_strerror((CURLcode) code);
-    } else {
+    if (code < 10000) {
         msg = storj_strerror(code);
+    } else if (code >= 10000 && code < 20000) {
+        msg = curl_easy_strerror((CURLcode) (code - 10000));
+    } else {
+        msg = strerror(code - 20000);
     }
 
     return env->NewStringUTF(msg);

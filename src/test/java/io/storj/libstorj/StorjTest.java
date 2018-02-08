@@ -250,26 +250,10 @@ public class StorjTest {
 
     @Test
     public void testGetErrorMessage() {
-        Assert.assertEquals("No such file or directory",
-                Storj.getErrorMessage(Storj.ENOENT));
-        Assert.assertEquals("Permission denied",
-                Storj.getErrorMessage(Storj.EACCES));
         Assert.assertEquals("No errors",
                 Storj.getErrorMessage(Storj.NO_ERROR));
-        Assert.assertEquals("Unsupported protocol",
-                Storj.getErrorMessage(Storj.CURLE_UNSUPPORTED_PROTOCOL));
-        Assert.assertEquals("URL using bad/illegal format or missing URL",
-                Storj.getErrorMessage(Storj.CURLE_URL_MALFORMAT));
-        Assert.assertEquals("Couldn't resolve proxy name",
-                Storj.getErrorMessage(Storj.CURLE_COULDNT_RESOLVE_PROXY));
-        Assert.assertEquals("Couldn't resolve host name",
-                Storj.getErrorMessage(Storj.CURLE_COULDNT_RESOLVE_HOST));
-        Assert.assertEquals("Couldn't connect to server",
-                Storj.getErrorMessage(Storj.CURLE_COULDNT_CONNECT));
-        Assert.assertEquals("Out of memory",
-                Storj.getErrorMessage(Storj.CURLE_OUT_OF_MEMORY));
-        Assert.assertEquals("Timeout was reached",
-                Storj.getErrorMessage(Storj.CURLE_OPERATION_TIMEDOUT));
+        Assert.assertEquals("File transfer canceled",
+                Storj.getErrorMessage(Storj.TRANSFER_CANCELED));
         Assert.assertEquals("Bad Request",
                 Storj.getErrorMessage(Storj.HTTP_BAD_REQUEST));
         Assert.assertEquals("Unauthorized",
@@ -354,6 +338,24 @@ public class StorjTest {
                 Storj.getErrorMessage(Storj.STORJ_META_DECRYPTION_ERROR));
         Assert.assertEquals("Unable to decode hex string",
                 Storj.getErrorMessage(Storj.STORJ_HEX_DECODE_ERROR));
+        Assert.assertEquals("Unsupported protocol",
+                Storj.getErrorMessage(Storj.CURLE_UNSUPPORTED_PROTOCOL));
+        Assert.assertEquals("URL using bad/illegal format or missing URL",
+                Storj.getErrorMessage(Storj.CURLE_URL_MALFORMAT));
+        Assert.assertEquals("Couldn't resolve proxy name",
+                Storj.getErrorMessage(Storj.CURLE_COULDNT_RESOLVE_PROXY));
+        Assert.assertEquals("Couldn't resolve host name",
+                Storj.getErrorMessage(Storj.CURLE_COULDNT_RESOLVE_HOST));
+        Assert.assertEquals("Couldn't connect to server",
+                Storj.getErrorMessage(Storj.CURLE_COULDNT_CONNECT));
+        Assert.assertEquals("Out of memory",
+                Storj.getErrorMessage(Storj.CURLE_OUT_OF_MEMORY));
+        Assert.assertEquals("Timeout was reached",
+                Storj.getErrorMessage(Storj.CURLE_OPERATION_TIMEDOUT));
+        Assert.assertEquals("No such file or directory",
+                Storj.getErrorMessage(Storj.ENOENT));
+        Assert.assertEquals("Permission denied",
+                Storj.getErrorMessage(Storj.EACCES));
 
     }
 

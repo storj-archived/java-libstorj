@@ -29,70 +29,14 @@ import java.util.concurrent.CountDownLatch;
 public class Storj {
 
     /**
-     * Error code for "No such file or directory" error that occured on the local
-     * file system.
-     * 
-     * <p>
-     * This error code is usually returned on upload and download operations. For
-     * example, if the file to be uploaded does not exist, or the directory to save
-     * the downloaded file does not exist.
-     * </p>
-     */
-    public static final int ENOENT = -2;
-
-    /**
-     * Error code for "Permission denied" error that occured on the local file
-     * system.
-     * 
-     * <p>
-     * This error code is usually returned on upload and download operations. For
-     * example, if the file to be uploaded cannot be accessed due to insufficient
-     * permissions, or there are not enough permissions to save the downloaded file
-     * to the selected directory.
-     * </p>
-     */
-    public static final int EACCES = -13;
-
-    /**
      * Error code if there is no error.
      */
     public static final int NO_ERROR = 0;
 
     /**
-     * Error code if the Bridge URL uses protocol that is not supported.
+     * Error code if file transfer was canceled.
      */
-    public static final int CURLE_UNSUPPORTED_PROTOCOL = 1;
-
-    /**
-     * Error code if the Bridge URL is not properly formatted.
-     */
-    public static final int CURLE_URL_MALFORMAT = 3;
-
-    /**
-     * Error code if the given proxy host could not be resolved.
-     */
-    public static final int CURLE_COULDNT_RESOLVE_PROXY = 5;
-
-    /**
-     * Error code if the Bridge host could not be resolved.
-     */
-    public static final int CURLE_COULDNT_RESOLVE_HOST = 6;
-
-    /**
-     * Error code if failed to connect to the Bridge server or to the proxy.
-     */
-    public static final int CURLE_COULDNT_CONNECT = 7;
-
-    /**
-     * Error code if a memory allocation request failed in the libcurl native
-     * library.
-     */
-    public static final int CURLE_OUT_OF_MEMORY = 27;
-
-    /**
-     * Error code if a network operation timed out.
-     */
-    public static final int CURLE_OPERATION_TIMEDOUT = 28;
+    public static final int TRANSFER_CANCELED = 1;
     
     /**
      * Error code if an invalid request was sent to the Bridge.
@@ -344,6 +288,67 @@ public class Storj {
      * Error code if failed to generate the file key for encryption.
      */
     public static final int STORJ_HEX_DECODE_ERROR = 7000;
+
+    /**
+     * Error code if the Bridge URL uses protocol that is not supported.
+     */
+    public static final int CURLE_UNSUPPORTED_PROTOCOL = 10001;
+
+    /**
+     * Error code if the Bridge URL is not properly formatted.
+     */
+    public static final int CURLE_URL_MALFORMAT = 10003;
+
+    /**
+     * Error code if the given proxy host could not be resolved.
+     */
+    public static final int CURLE_COULDNT_RESOLVE_PROXY = 10005;
+
+    /**
+     * Error code if the Bridge host could not be resolved.
+     */
+    public static final int CURLE_COULDNT_RESOLVE_HOST = 10006;
+
+    /**
+     * Error code if failed to connect to the Bridge server or to the proxy.
+     */
+    public static final int CURLE_COULDNT_CONNECT = 10007;
+
+    /**
+     * Error code if a memory allocation request failed in the libcurl native
+     * library.
+     */
+    public static final int CURLE_OUT_OF_MEMORY = 10027;
+
+    /**
+     * Error code if a network operation timed out.
+     */
+    public static final int CURLE_OPERATION_TIMEDOUT = 10028;
+
+    /**
+     * Error code for "No such file or directory" error that occured on the local
+     * file system.
+     * 
+     * <p>
+     * This error code is usually returned on upload and download operations. For
+     * example, if the file to be uploaded does not exist, or the directory to save
+     * the downloaded file does not exist.
+     * </p>
+     */
+    public static final int ENOENT = 20002;
+
+    /**
+     * Error code for "Permission denied" error that occured on the local file
+     * system.
+     * 
+     * <p>
+     * This error code is usually returned on upload and download operations. For
+     * example, if the file to be uploaded cannot be accessed due to insufficient
+     * permissions, or there are not enough permissions to save the downloaded file
+     * to the selected directory.
+     * </p>
+     */
+    public static final int EACCES = 20013;
 
     private static final String DEFAULT_PROTO = "https";
     private static final String DEFAULT_HOST = "api.storj.io";
