@@ -17,6 +17,7 @@
 package io.storj.libstorj;
 
 import java.net.MalformedURLException;
+import java.util.concurrent.CountDownLatch;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -186,26 +187,34 @@ public class StorjTest {
     }
 
     @Test
-    public void testUploadFile() {
+    public void testUploadFile() throws InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+
         storj.uploadFile(bucket, "/tmp/file-name", new UploadFileCallback() {
             @Override
             public void onProgress(String filePath, double progress, long uploadedBytes, long totalBytes) {
             }
 
             @Override
-            public void onError(String filePath, int code, String message) {
-                System.out.printf("[%d] %s\n", code, message);
+            public void onComplete(String filePath, File file) {
+                System.out.println(file.getId());
+                latch.countDown();
             }
 
             @Override
-            public void onComplete(String filePath, File file) {
-                System.out.println(file.getId());
+            public void onError(String filePath, int code, String message) {
+                System.out.printf("[%d] %s\n", code, message);
+                latch.countDown();
             }
         });
+
+        latch.await();
     }
 
     @Test
-    public void testDownloadFile() {
+    public void testDownloadFile() throws InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+
         storj.downloadFile(bucket, file, new DownloadFileCallback() {
             @Override
             public void onProgress(String fileId, double progress, long downloadedBytes, long totalBytes) {
@@ -214,13 +223,17 @@ public class StorjTest {
             @Override
             public void onComplete(String fileId, String localPath) {
                 System.out.println(localPath);
+                latch.countDown();
             }
 
             @Override
             public void onError(String fileId, int code, String message) {
                 System.out.printf("[%d] %s\n", code, message);
+                latch.countDown();
             }
         });
+
+        latch.await();
     }
 
     @Test

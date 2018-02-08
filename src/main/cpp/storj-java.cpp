@@ -74,18 +74,17 @@ int getJNIEnv(JNIEnv **env)
 
 typedef struct {
     jobject callbackObject;
-} jcallback_t;
+    char *bucket_id;
+    char *file_id;
+    char *path;
+} download_handle_t;
 
 typedef struct {
-    jcallback_t base;
-    jstring fileId;
-    jstring localPath;
-} jdownload_callback_t;
-
-typedef struct {
-    jcallback_t base;
-    jstring filePath;
-} jupload_callback_t;
+    jobject callbackObject;
+    char *bucket_id;
+    char *file_name;
+    char *path;
+} upload_handle_t;
 
 static void error_callback(JNIEnv *env, jobject callbackObject, int code, const char *message)
 {
@@ -110,6 +109,32 @@ static void error_callback(JNIEnv *env, jobject callbackObject, jstring arg, int
                         arg,
                         code,
                         env->NewStringUTF(message));
+}
+
+static void error_callback_download(JNIEnv *env, download_handle_t *h, int code, const char *message)
+{
+    jstring fileId = env->NewStringUTF(h->file_id);
+
+    error_callback(env, h->callbackObject, fileId, code, message);
+
+    env->DeleteGlobalRef(h->callbackObject);
+    free(h->bucket_id);
+    free(h->file_id);
+    free(h->path);
+    delete h;
+}
+
+static void error_callback_upload(JNIEnv *env, upload_handle_t *h, int code, const char *message)
+{
+    jstring localPath = env->NewStringUTF(h->path);
+
+    error_callback(env, h->callbackObject, localPath, code, message);
+
+    env->DeleteGlobalRef(h->callbackObject);
+    free(h->bucket_id);
+    free(h->file_name);
+    free(h->path);
+    delete h;
 }
 
 extern "C"
@@ -193,12 +218,22 @@ Java_io_storj_libstorj_Storj__1destroyEnv(
     storj_destroy_env(storj_env);
 }
 
+extern "C"
+JNIEXPORT void JNICALL
+Java_io_storj_libstorj_Storj__1runEventLoop(
+        JNIEnv *env,
+        jobject /* instance */,
+        jlong storjEnv)
+{
+    storj_env_t *storj_env = (storj_env_t *) storjEnv;
+    uv_run(storj_env->loop, UV_RUN_DEFAULT);
+}
+
 static void get_buckets_callback(uv_work_t *work_req, int status)
 {
     assert(status == 0);
     get_buckets_request_t *req = (get_buckets_request_t *) work_req->data;
-    jcallback_t *jcallback = (jcallback_t *) req->handle;
-    jobject callbackObject = jcallback->callbackObject;
+    jobject callbackObject = (jobject) req->handle;
 
     JNIEnv *env;
     getJNIEnv(&env);
@@ -258,10 +293,9 @@ Java_io_storj_libstorj_Storj__1getBuckets(
 {
     storj_env_t *storj_env = (storj_env_t *) storjEnv;
 
-    jcallback_t jcallback = {
-            .callbackObject = env->NewGlobalRef(callbackObject)
-    };
-    storj_bridge_get_buckets(storj_env, &jcallback, get_buckets_callback);
+    storj_bridge_get_buckets(storj_env,
+                             env->NewGlobalRef(callbackObject),
+                             get_buckets_callback);
 
     uv_run(storj_env->loop, UV_RUN_DEFAULT);
 }
@@ -270,8 +304,7 @@ static void get_bucket_callback(uv_work_t *work_req, int status)
 {
     assert(status == 0);
     get_bucket_request_t *req = (get_bucket_request_t *) work_req->data;
-    jcallback_t *jcallback = (jcallback_t *) req->handle;
-    jobject callbackObject = jcallback->callbackObject;
+    jobject callbackObject = (jobject) req->handle;
 
     JNIEnv *env;
     getJNIEnv(&env);
@@ -321,10 +354,10 @@ Java_io_storj_libstorj_Storj__1getBucket(
     storj_env_t *storj_env = (storj_env_t *) storjEnv;
     const char *bucket_id = env->GetStringUTFChars(bucketId, NULL);
 
-    jcallback_t jcallback = {
-            .callbackObject = env->NewGlobalRef(callbackObject)
-    };
-    storj_bridge_get_bucket(storj_env, bucket_id, &jcallback, get_bucket_callback);
+    storj_bridge_get_bucket(storj_env,
+                            bucket_id,
+                            env->NewGlobalRef(callbackObject),
+                            get_bucket_callback);
 
     uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
@@ -335,8 +368,7 @@ static void get_bucket_id_callback(uv_work_t *work_req, int status)
 {
     assert(status == 0);
     get_bucket_id_request_t *req = (get_bucket_id_request_t *) work_req->data;
-    jcallback_t *jcallback = (jcallback_t *) req->handle;
-    jobject callbackObject = jcallback->callbackObject;
+    jobject callbackObject = (jobject) req->handle;
 
     JNIEnv *env;
     getJNIEnv(&env);
@@ -376,10 +408,10 @@ Java_io_storj_libstorj_Storj__1getBucketId(
     storj_env_t *storj_env = (storj_env_t *) storjEnv;
     const char *bucket_name = env->GetStringUTFChars(bucketName, NULL);
 
-    jcallback_t jcallback = {
-            .callbackObject = env->NewGlobalRef(callbackObject)
-    };
-    storj_bridge_get_bucket_id(storj_env, bucket_name, &jcallback, get_bucket_id_callback);
+    storj_bridge_get_bucket_id(storj_env,
+                               bucket_name,
+                               env->NewGlobalRef(callbackObject),
+                               get_bucket_id_callback);
 
     uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
@@ -390,8 +422,7 @@ static void create_bucket_callback(uv_work_t *work_req, int status)
 {
     assert(status == 0);
     create_bucket_request_t *req = (create_bucket_request_t *) work_req->data;
-    jcallback_t *jcallback = (jcallback_t *) req->handle;
-    jobject callbackObject = jcallback->callbackObject;
+    jobject callbackObject = (jobject) req->handle;
 
     JNIEnv *env;
     getJNIEnv(&env);
@@ -444,10 +475,10 @@ Java_io_storj_libstorj_Storj__1createBucket(
     storj_env_t *storj_env = (storj_env_t *) storjEnv;
     const char *bucket_name = env->GetStringUTFChars(bucketName, NULL);
 
-    jcallback_t jcallback = {
-            .callbackObject = env->NewGlobalRef(callbackObject)
-    };
-    storj_bridge_create_bucket(storj_env, bucket_name, &jcallback, create_bucket_callback);
+    storj_bridge_create_bucket(storj_env,
+                               bucket_name,
+                               env->NewGlobalRef(callbackObject),
+                               create_bucket_callback);
 
     uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
@@ -458,8 +489,7 @@ static void list_files_callback(uv_work_t *work_req, int status)
 {
     assert(status == 0);
     list_files_request_t *req = (list_files_request_t *) work_req->data;
-    jcallback_t *jcallback = (jcallback_t *) req->handle;
-    jobject callbackObject = jcallback->callbackObject;
+    jobject callbackObject = (jobject) req->handle;
 
     JNIEnv *env;
     getJNIEnv(&env);
@@ -553,10 +583,10 @@ Java_io_storj_libstorj_Storj__1listFiles(
     storj_env_t *storj_env = (storj_env_t *) storjEnv;
     const char *bucket_id = env->GetStringUTFChars(bucketId, NULL);
 
-    jcallback_t jcallback = {
-            .callbackObject = env->NewGlobalRef(callbackObject)
-    };
-    storj_bridge_list_files(storj_env, bucket_id, &jcallback, list_files_callback);
+    storj_bridge_list_files(storj_env,
+                            bucket_id,
+                            env->NewGlobalRef(callbackObject),
+                            list_files_callback);
 
     uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
@@ -567,8 +597,7 @@ static void get_file_callback(uv_work_t *work_req, int status)
 {
     assert(status == 0);
     get_file_info_request_t *req = (get_file_info_request_t *) work_req->data;
-    jcallback_t *jcallback = (jcallback_t *) req->handle;
-    jobject callbackObject = jcallback->callbackObject;
+    jobject callbackObject = (jobject) req->handle;
 
     JNIEnv *env;
     getJNIEnv(&env);
@@ -635,10 +664,11 @@ Java_io_storj_libstorj_Storj__1getFile(
     const char *bucket_id = env->GetStringUTFChars(bucketId, NULL);
     const char *file_id = env->GetStringUTFChars(fileId, NULL);
 
-    jcallback_t jcallback = {
-            .callbackObject = env->NewGlobalRef(callbackObject)
-    };
-    storj_bridge_get_file_info(storj_env, bucket_id, file_id, &jcallback, get_file_callback);
+    storj_bridge_get_file_info(storj_env,
+                               bucket_id,
+                               file_id,
+                               env->NewGlobalRef(callbackObject),
+                               get_file_callback);
 
     uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
@@ -650,8 +680,7 @@ static void get_file_id_callback(uv_work_t *work_req, int status)
 {
     assert(status == 0);
     get_file_id_request_t *req = (get_file_id_request_t *) work_req->data;
-    jcallback_t *jcallback = (jcallback_t *) req->handle;
-    jobject callbackObject = jcallback->callbackObject;
+    jobject callbackObject = (jobject) req->handle;
 
     JNIEnv *env;
     getJNIEnv(&env);
@@ -693,10 +722,11 @@ Java_io_storj_libstorj_Storj__1getFileId(
     const char *bucket_id = env->GetStringUTFChars(bucketId, NULL);
     const char *file_name = env->GetStringUTFChars(fileName, NULL);
 
-    jcallback_t jcallback = {
-            .callbackObject = env->NewGlobalRef(callbackObject)
-    };
-    storj_bridge_get_file_id(storj_env, bucket_id, file_name, &jcallback, get_file_id_callback);
+    storj_bridge_get_file_id(storj_env,
+                             bucket_id,
+                             file_name,
+                             env->NewGlobalRef(callbackObject),
+                             get_file_id_callback);
 
     uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
@@ -706,22 +736,21 @@ Java_io_storj_libstorj_Storj__1getFileId(
 
 static void download_file_progress_callback(double progress, uint64_t bytes, uint64_t total_bytes, void *handle)
 {
-    jcallback_t *jcallback = (jcallback_t *) handle;
-    jobject callbackObject = jcallback->callbackObject;
-
     JNIEnv *env;
     getJNIEnv(&env);
 
     if (env != NULL) {
-        jclass callbackClass = env->GetObjectClass(callbackObject);
+        download_handle_t *h = (download_handle_t *) handle;
+
+        jclass callbackClass = env->GetObjectClass(h->callbackObject);
         jmethodID callbackMethod = env->GetMethodID(callbackClass,
                                                     "onProgress",
                                                     "(Ljava/lang/String;DJJ)V");
+        jstring fileId = env->NewStringUTF(h->file_id);
 
-        jdownload_callback_t *cb_extension = (jdownload_callback_t *) handle;
-        env->CallVoidMethod(callbackObject,
+        env->CallVoidMethod(h->callbackObject,
                             callbackMethod,
-                            cb_extension->fileId,
+                            fileId,
                             progress,
                             bytes,
                             total_bytes);
@@ -729,6 +758,7 @@ static void download_file_progress_callback(double progress, uint64_t bytes, uin
         // this function is called multiple times during file download
         // cleanup is necessary to avoid local reference table overflow
         env->DeleteLocalRef(callbackClass);
+        env->DeleteLocalRef(fileId);
     }
 }
 
@@ -736,65 +766,38 @@ static void download_file_complete_callback(int status, FILE *fd, void *handle)
 {
     fclose(fd);
 
-    jcallback_t *jcallback = (jcallback_t *) handle;
-    jobject callbackObject = jcallback->callbackObject;
-    jdownload_callback_t *cb_extension = (jdownload_callback_t *) handle;
-
     JNIEnv *env;
     getJNIEnv(&env);
 
     if (env != NULL) {
+        download_handle_t *h = (download_handle_t *) handle;
+
         if (status) {
-            error_callback(env, callbackObject, cb_extension->fileId, status, storj_strerror(status));
+            error_callback_download(env, h, status, storj_strerror(status));
         } else {
-            jclass callbackClass = env->GetObjectClass(callbackObject);
+            jclass callbackClass = env->GetObjectClass(h->callbackObject);
             jmethodID callbackMethod = env->GetMethodID(callbackClass,
                                                         "onComplete",
                                                         "(Ljava/lang/String;Ljava/lang/String;)V");
+            jstring fileId = env->NewStringUTF(h->file_id);
+            jstring localPath = env->NewStringUTF(h->path);
 
-            env->CallVoidMethod(callbackObject,
+            env->CallVoidMethod(h->callbackObject,
                                 callbackMethod,
-                                cb_extension->fileId,
-                                cb_extension->localPath);
+                                fileId,
+                                localPath);
 
-            env->DeleteGlobalRef(callbackObject);
-            env->DeleteGlobalRef(cb_extension->fileId);
-            env->DeleteGlobalRef(cb_extension->localPath);
+            env->DeleteGlobalRef(h->callbackObject);
+            free(h->bucket_id);
+            free(h->file_id);
+            free(h->path);
+            delete h;
         }
     }
 }
 
-static int download_file(
-        FILE *fd,
-        const char *bucket_id,
-        const char *file_id,
-        storj_env_t *storj_env,
-        void *handle)
-{
-    uv_signal_t *sig = (uv_signal_t *) malloc(sizeof(uv_signal_t));
-    if (!sig) {
-        return 1;
-    }
-
-    uv_signal_init(storj_env->loop, sig);
-//  uv_signal_start(sig, download_signal_handler, SIGINT);
-
-    storj_download_state_t *state;
-    state = storj_bridge_resolve_file(storj_env,
-                                      bucket_id,
-                                      file_id,
-                                      fd,
-                                      handle,
-                                      download_file_progress_callback,
-                                      download_file_complete_callback);
-
-    sig->data = state;
-
-    return state->error_status;
-}
-
 extern "C"
-JNIEXPORT void JNICALL
+JNIEXPORT jlong JNICALL
 Java_io_storj_libstorj_Storj__1downloadFile(
         JNIEnv *env,
         jobject /* instance */,
@@ -809,15 +812,11 @@ Java_io_storj_libstorj_Storj__1downloadFile(
     const char *file_id = env->GetStringUTFChars(fileId, NULL);
     const char *path = env->GetStringUTFChars(localPath, NULL);
 
-    jcallback_t jcallback = {
-            .callbackObject = env->NewGlobalRef(callbackObject)
-    };
-
-    jdownload_callback_t cb_extension = {
-            .base = jcallback,
-            .fileId = (jstring) env->NewGlobalRef(fileId),
-            .localPath = (jstring) env->NewGlobalRef(localPath)
-    };
+    download_handle_t *h = new download_handle_t;
+    h->callbackObject = env->NewGlobalRef(callbackObject);
+    h->bucket_id = strdup(bucket_id);
+    h->file_id = strdup(file_id);
+    h->path = strdup(path);
 
     FILE *fd = NULL;
 
@@ -825,37 +824,64 @@ Java_io_storj_libstorj_Storj__1downloadFile(
         fd = fopen(path, "w+");
     }
 
+    storj_download_state_t *state = NULL;
+
     if (fd == NULL) {
-        error_callback(env, callbackObject, fileId, 20000 + errno, strerror(errno));
-    } else if (download_file(fd, bucket_id, file_id, storj_env, &cb_extension)) {
-        error_callback(env, callbackObject, fileId, STORJ_MEMORY_ERROR, storj_strerror(STORJ_MEMORY_ERROR));
+        error_callback_download(env, h, 20000 + errno, strerror(errno));
     } else {
-        uv_run(storj_env->loop, UV_RUN_DEFAULT);
+        state = storj_bridge_resolve_file(storj_env,
+                                          h->bucket_id,
+                                          h->file_id,
+                                          fd,
+                                          h,
+                                          download_file_progress_callback,
+                                          download_file_complete_callback);
+        if (!state) {
+            error_callback_download(env, h, STORJ_MEMORY_ERROR, storj_strerror(STORJ_MEMORY_ERROR));
+        } else if (state->error_status) {
+            error_callback_download(env, h, state->error_status, storj_strerror(state->error_status));
+        }
     }
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
     env->ReleaseStringUTFChars(fileId, file_id);
     env->ReleaseStringUTFChars(localPath, path);
+
+    return (jlong) state;
+}
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_io_storj_libstorj_Storj__1cancelDownload(
+        JNIEnv *env,
+        jobject /* instance */,
+        jlong downloadState)
+{
+    storj_download_state_t *state = (storj_download_state_t *) downloadState;
+
+    int result = storj_bridge_resolve_file_cancel(state);
+
+    return (jboolean) (result == 0);
 }
 
 static void upload_file_progress_callback(double progress, uint64_t bytes, uint64_t total_bytes, void *handle)
 {
-    jcallback_t *jcallback = (jcallback_t *) handle;
-    jobject callbackObject = jcallback->callbackObject;
 
     JNIEnv *env;
     getJNIEnv(&env);
 
     if (env != NULL) {
-        jclass callbackClass = env->GetObjectClass(callbackObject);
+        upload_handle_t *h = (upload_handle_t *) handle;
+
+        jclass callbackClass = env->GetObjectClass(h->callbackObject);
         jmethodID callbackMethod = env->GetMethodID(callbackClass,
                                                     "onProgress",
                                                     "(Ljava/lang/String;DJJ)V");
+        jstring localPath = env->NewStringUTF(h->path);
 
-        jupload_callback_t *cb_extension = (jupload_callback_t *) handle;
-        env->CallVoidMethod(callbackObject,
+        env->CallVoidMethod(h->callbackObject,
                             callbackMethod,
-                            cb_extension->filePath,
+                            localPath,
                             progress,
                             bytes,
                             total_bytes);
@@ -863,21 +889,21 @@ static void upload_file_progress_callback(double progress, uint64_t bytes, uint6
         // this function is called multiple times during file download
         // cleanup is necessary to avoid local reference table overflow
         env->DeleteLocalRef(callbackClass);
+        env->DeleteLocalRef(localPath);
     }
 }
 
 static void upload_file_complete_callback(int status, storj_file_meta_t *file, void *handle)
 {
-    jcallback_t *jcallback = (jcallback_t *) handle;
-    jobject callbackObject = jcallback->callbackObject;
-    jupload_callback_t *cb_extension = (jupload_callback_t *) handle;
 
     JNIEnv *env;
     getJNIEnv(&env);
 
     if (env != NULL) {
+        upload_handle_t *h = (upload_handle_t *) handle;
+
         if (status) {
-            error_callback(env, callbackObject, cb_extension->filePath, status, storj_strerror(status));
+            error_callback_upload(env, h, status, storj_strerror(status));
         } else {
             jclass fileClass = env->FindClass("io/storj/libstorj/File");
             jmethodID fileInit = env->GetMethodID(fileClass,
@@ -906,63 +932,30 @@ static void upload_file_complete_callback(int status, storj_file_meta_t *file, v
                                                 index,
                                                 hmac);
 
-            jclass callbackClass = env->GetObjectClass(callbackObject);
+            jclass callbackClass = env->GetObjectClass(h->callbackObject);
             jmethodID callbackMethod = env->GetMethodID(callbackClass,
                                                         "onComplete",
                                                         "(Ljava/lang/String;Lio/storj/libstorj/File;)V");
+            jstring localPath = env->NewStringUTF(h->path);
 
-            env->CallVoidMethod(callbackObject,
+            env->CallVoidMethod(h->callbackObject,
                                 callbackMethod,
-                                cb_extension->filePath,
+                                localPath,
                                 fileObject);
 
-            env->DeleteGlobalRef(callbackObject);
-            env->DeleteGlobalRef(cb_extension->filePath);
+            env->DeleteGlobalRef(h->callbackObject);
+            free(h->bucket_id);
+            free(h->file_name);
+            free(h->path);
+            delete h;
         }
     }
 
     storj_free_uploaded_file_info(file);
 }
 
-static int upload_file(
-        FILE *fd,
-        const char *bucket_id,
-        const char *file_name,
-        storj_env_t *storj_env,
-        void *handle)
-{
-    storj_upload_opts_t upload_opts = {
-            .prepare_frame_limit = 1,
-            .push_frame_limit = 64,
-            .push_shard_limit = 64,
-            .rs = true,
-            .index = NULL,
-            .bucket_id = bucket_id,
-            .file_name = file_name,
-            .fd = fd
-    };
-
-    uv_signal_t *sig = (uv_signal_t *) malloc(sizeof(uv_signal_t));
-    if (!sig) {
-        return 1;
-    }
-
-    uv_signal_init(storj_env->loop, sig);
-//  uv_signal_start(sig, upload_signal_handler, SIGINT);
-
-    storj_upload_state_t *state;
-    state = storj_bridge_store_file(storj_env,
-                                    &upload_opts,
-                                    handle,
-                                    upload_file_progress_callback,
-                                    upload_file_complete_callback);
-    sig->data = state;
-
-    return state->error_status;
-}
-
 extern "C"
-JNIEXPORT void JNICALL
+JNIEXPORT jlong JNICALL
 Java_io_storj_libstorj_Storj__1uploadFile(
         JNIEnv *env,
         jobject /* instance */,
@@ -977,36 +970,67 @@ Java_io_storj_libstorj_Storj__1uploadFile(
     const char *file_name = env->GetStringUTFChars(fileName, NULL);
     const char *local_path = env->GetStringUTFChars(localPath, NULL);
 
-    jcallback_t jcallback = {
-            .callbackObject = env->NewGlobalRef(callbackObject)
-    };
-
-    jupload_callback_t cb_extension = {
-            .base = jcallback,
-            .filePath = (jstring) env->NewGlobalRef(localPath)
-    };
+    upload_handle_t *h = new upload_handle_t;
+    h->callbackObject = env->NewGlobalRef(callbackObject);
+    h->bucket_id = strdup(bucket_id);
+    h->file_name = strdup(file_name);
+    h->path = strdup(local_path);
 
     FILE *fd = fopen(local_path, "r");
 
+    storj_upload_state_t *state;
+
     if (!fd) {
-        error_callback(env, callbackObject, localPath, 20000 + errno, strerror(errno));
-    } else if (upload_file(fd, bucket_id, file_name, storj_env, &cb_extension)) {
-        error_callback(env, callbackObject, localPath, STORJ_MEMORY_ERROR, storj_strerror(STORJ_MEMORY_ERROR));
+        error_callback_upload(env, h, 20000 + errno, strerror(errno));
     } else {
-        uv_run(storj_env->loop, UV_RUN_DEFAULT);
+        storj_upload_opts_t upload_opts = {
+                .prepare_frame_limit = 1,
+                .push_frame_limit = 64,
+                .push_shard_limit = 64,
+                .rs = true,
+                .index = NULL,
+                .bucket_id = h->bucket_id,
+                .file_name = h->file_name,
+                .fd = fd
+        };
+        state = storj_bridge_store_file(storj_env,
+                                        &upload_opts,
+                                        h,
+                                        upload_file_progress_callback,
+                                        upload_file_complete_callback);
+        if (!state) {
+            error_callback_upload(env, h, STORJ_MEMORY_ERROR, storj_strerror(STORJ_MEMORY_ERROR));
+        } else if (state->error_status) {
+            error_callback_upload(env, h, state->error_status, storj_strerror(state->error_status));
+        }
     }
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
     env->ReleaseStringUTFChars(fileName, file_name);
     env->ReleaseStringUTFChars(localPath, local_path);
+
+    return (jlong) state;
+}
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_io_storj_libstorj_Storj__1cancelUpload(
+        JNIEnv *env,
+        jobject /* instance */,
+        jlong uploadState)
+{
+    storj_upload_state_t *state = (storj_upload_state_t *) uploadState;
+
+    int result = storj_bridge_store_file_cancel(state);
+
+    return (jboolean) (result == 0);
 }
 
 static void delete_bucket_callback(uv_work_t *work_req, int status)
 {
     assert(status == 0);
     json_request_t *req = (json_request_t *) work_req->data;
-    jcallback_t *jcallback = (jcallback_t *) req->handle;
-    jobject callbackObject = jcallback->callbackObject;
+    jobject callbackObject = (jobject) req->handle;
 
     JNIEnv *env;
     getJNIEnv(&env);
@@ -1042,10 +1066,10 @@ Java_io_storj_libstorj_Storj__1deleteBucket(
     storj_env_t *storj_env = (storj_env_t *) storjEnv;
     const char *bucket_id = env->GetStringUTFChars(bucketId, NULL);
 
-    jcallback_t jcallback = {
-            .callbackObject = env->NewGlobalRef(callbackObject)
-    };
-    storj_bridge_delete_bucket(storj_env, bucket_id, &jcallback, delete_bucket_callback);
+    storj_bridge_delete_bucket(storj_env,
+                               bucket_id,
+                               env->NewGlobalRef(callbackObject),
+                               delete_bucket_callback);
 
     uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
@@ -1056,8 +1080,7 @@ static void delete_file_callback(uv_work_t *work_req, int status)
 {
     assert(status == 0);
     json_request_t *req = (json_request_t *) work_req->data;
-    jcallback_t *jcallback = (jcallback_t *) req->handle;
-    jobject callbackObject = jcallback->callbackObject;
+    jobject callbackObject = (jobject) req->handle;
 
     JNIEnv *env;
     getJNIEnv(&env);
@@ -1095,10 +1118,11 @@ Java_io_storj_libstorj_Storj__1deleteFile(
     const char *bucket_id = env->GetStringUTFChars(bucketId, NULL);
     const char *file_id = env->GetStringUTFChars(fileId, NULL);
 
-    jcallback_t jcallback = {
-            .callbackObject = env->NewGlobalRef(callbackObject)
-    };
-    storj_bridge_delete_file(storj_env, bucket_id, file_id, &jcallback, delete_file_callback);
+    storj_bridge_delete_file(storj_env,
+                             bucket_id,
+                             file_id,
+                             env->NewGlobalRef(callbackObject),
+                             delete_file_callback);
 
     uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
@@ -1110,8 +1134,7 @@ static void register_callback(uv_work_t *work_req, int status)
 {
     assert(status == 0);
     json_request_t *req = (json_request_t *) work_req->data;
-    jcallback_t *jcallback = (jcallback_t *) req->handle;
-    jobject callbackObject = jcallback->callbackObject;
+    jobject callbackObject = (jobject) req->handle;
 
     JNIEnv *env;
     getJNIEnv(&env);
@@ -1151,13 +1174,10 @@ Java_io_storj_libstorj_Storj__1register(
 {
     storj_env_t *storj_env = (storj_env_t *) storjEnv;
 
-    jcallback_t jcallback = {
-            .callbackObject = env->NewGlobalRef(callbackObject)
-    };
     storj_bridge_register(storj_env,
                           storj_env->bridge_options->user,
                           storj_env->bridge_options->pass,
-                          &jcallback,
+                          env->NewGlobalRef(callbackObject),
                           register_callback);
 
     uv_run(storj_env->loop, UV_RUN_DEFAULT);
@@ -1167,8 +1187,7 @@ static void get_info_callback(uv_work_t *work_req, int status)
 {
     assert(status == 0);
     json_request_t *req = (json_request_t *) work_req->data;
-    jcallback_t *jcallback = (jcallback_t *) req->handle;
-    jobject callbackObject = jcallback->callbackObject;
+    jobject callbackObject = (jobject) req->handle;
 
     JNIEnv *env;
     getJNIEnv(&env);
@@ -1218,10 +1237,9 @@ Java_io_storj_libstorj_Storj__1getInfo(
 {
     storj_env_t *storj_env = (storj_env_t *) storjEnv;
 
-    jcallback_t jcallback = {
-            .callbackObject = env->NewGlobalRef(callbackObject)
-    };
-    storj_bridge_get_info(storj_env, &jcallback, get_info_callback);
+    storj_bridge_get_info(storj_env,
+                          env->NewGlobalRef(callbackObject),
+                          get_info_callback);
 
     uv_run(storj_env->loop, UV_RUN_DEFAULT);
 }

@@ -1039,13 +1039,16 @@ public class Storj {
      * @param callback
      *            an implementation of the {@link DownloadFileCallback} interface to
      *            receive the download progress
+     * @return a pointer to the download state that can be passed to
+     *         {@link #_cancelDownload(long)}
      * @throws KeysNotFoundException
      *             if the user's keys have not been imported yet
+     * @see #cancelDownload(long)
      */
-    public void downloadFile(Bucket bucket, File file, DownloadFileCallback callback) throws KeysNotFoundException {
+    public long downloadFile(Bucket bucket, File file, DownloadFileCallback callback) throws KeysNotFoundException {
         checkDownloadDir();
         String localPath = new java.io.File(downloadDir, file.getName()).getPath();
-        downloadFile(bucket, file, localPath, callback);
+        return downloadFile(bucket, file, localPath, callback);
     }
 
     /**
@@ -1060,12 +1063,15 @@ public class Storj {
      * @param callback
      *            an implementation of the {@link DownloadFileCallback} interface to
      *            receive the download progress
+     * @return a pointer to the download state that can be passed to
+     *         {@link #_cancelDownload(long)}
      * @throws KeysNotFoundException
      *             if the user's keys have not been imported yet
+     * @see #cancelDownload(long)
      */
-    public void downloadFile(Bucket bucket, File file, String localPath, DownloadFileCallback callback)
+    public long downloadFile(Bucket bucket, File file, String localPath, DownloadFileCallback callback)
             throws KeysNotFoundException {
-        downloadFile(bucket.getId(), file.getId(), localPath, callback);
+        return downloadFile(bucket.getId(), file.getId(), localPath, callback);
     }
 
     /**
@@ -1080,13 +1086,45 @@ public class Storj {
      * @param callback
      *            an implementation of the {@link DownloadFileCallback} interface to
      *            receive the download progress
+     * @return a pointer to the download state that can be passed to
+     *         {@link #_cancelDownload(long)}
      * @throws KeysNotFoundException
      *             if the user's keys have not been imported yet
+     * @see #cancelDownload(long)
      */
-    public void downloadFile(String bucketId, String fileId, String localPath, DownloadFileCallback callback)
+    public long downloadFile(String bucketId, String fileId, String localPath, DownloadFileCallback callback)
             throws KeysNotFoundException {
         checkEnv();
-        _downloadFile(env, bucketId, fileId, localPath, callback);
+
+        long state = _downloadFile(env, bucketId, fileId, localPath, callback);
+
+        if (state != 0) {
+            new Thread() {
+                public void run() {
+                    _runEventLoop(env);
+                }
+            }.start();
+        }
+
+        return state;
+    }
+
+    /**
+     * Cancels the file download for the specified download state.
+     * 
+     * @param downloadState
+     *            a pointer to the download state returned by the
+     *            <code>downloadFile()</code> methods
+     * 
+     * @return <code>true</code> if the download was canceled successfully,
+     *         <code>false</code> otherwise
+     * 
+     * @see #downloadFile(Bucket, File, DownloadFileCallback)
+     * @see #downloadFile(Bucket, File, String, DownloadFileCallback)
+     * @see #downloadFile(String, String, String, DownloadFileCallback)
+     */
+    public boolean cancelDownload(long downloadState) {
+        return _cancelDownload(downloadState);
     }
 
     /**
@@ -1103,11 +1141,14 @@ public class Storj {
      * @param callback
      *            an implementation of the {@link UploadFileCallback} interface to
      *            receive the upload progress
+     * @return a pointer to the upload state that can be passed to
+     *         {@link #_cancelUpload(long)}
      * @throws KeysNotFoundException
      *             if the user's keys have not been imported yet
+     * @see #cancelUpload(long)
      */
-    public void uploadFile(Bucket bucket, String localPath, UploadFileCallback callback) throws KeysNotFoundException {
-        uploadFile(bucket.getId(), localPath, callback);
+    public long uploadFile(Bucket bucket, String localPath, UploadFileCallback callback) throws KeysNotFoundException {
+        return uploadFile(bucket.getId(), localPath, callback);
     }
 
     /**
@@ -1124,12 +1165,15 @@ public class Storj {
      * @param callback
      *            an implementation of the {@link UploadFileCallback} interface to
      *            receive the upload progress
+     * @return a pointer to the upload state that can be passed to
+     *         {@link #_cancelUpload(long)}
      * @throws KeysNotFoundException
      *             if the user's keys have not been imported yet
+     * @see #cancelUpload(long)
      */
-    public void uploadFile(String bucketId, String localPath, UploadFileCallback callback)
+    public long uploadFile(String bucketId, String localPath, UploadFileCallback callback)
             throws KeysNotFoundException {
-        uploadFile(bucketId, new java.io.File(localPath).getName(), localPath, callback);
+        return uploadFile(bucketId, new java.io.File(localPath).getName(), localPath, callback);
     }
 
     /**
@@ -1149,11 +1193,14 @@ public class Storj {
      * @param callback
      *            an implementation of the {@link UploadFileCallback} interface to
      *            receive the upload progress
+     * @return a pointer to the upload state that can be passed to
+     *         {@link #_cancelUpload(long)}
      * @throws KeysNotFoundException
      *             if the user's keys have not been imported yet
+     * @see #cancelUpload(long)
      */
-    public void uploadFile(Bucket bucket, String fileName, String localPath, UploadFileCallback callback) throws KeysNotFoundException {
-        uploadFile(bucket.getId(), fileName, localPath, callback);
+    public long uploadFile(Bucket bucket, String fileName, String localPath, UploadFileCallback callback) throws KeysNotFoundException {
+        return uploadFile(bucket.getId(), fileName, localPath, callback);
     }
 
     /**
@@ -1173,13 +1220,46 @@ public class Storj {
      * @param callback
      *            an implementation of the {@link UploadFileCallback} interface to
      *            receive the upload progress
+     * @return a pointer to the upload state that can be passed to
+     *         {@link #_cancelUpload(long)}
      * @throws KeysNotFoundException
      *             if the user's keys have not been imported yet
+     * @see #cancelUpload(long)
      */
-    public void uploadFile(String bucketId, String fileName, String localPath, UploadFileCallback callback)
+    public long uploadFile(String bucketId, String fileName, String localPath, UploadFileCallback callback)
             throws KeysNotFoundException {
         checkEnv();
-        _uploadFile(env, bucketId, fileName, localPath, callback);
+
+        long state = _uploadFile(env, bucketId, fileName, localPath, callback);
+
+        if (state != 0) {
+            new Thread() {
+                public void run() {
+                    _runEventLoop(env);
+                }
+            }.start();
+        }
+
+        return state;
+    }
+
+    /**
+     * Cancels the file upload for the specified upload state.
+     * 
+     * @param uploadState
+     *            a pointer to the upload state returned by the
+     *            <code>uploadFile()</code> methods
+     * 
+     * @return <code>true</code> if the upload was canceled successfully,
+     *         <code>false</code> otherwise
+     * 
+     * @see #uploadFile(Bucket, String, UploadFileCallback)
+     * @see #uploadFile(String, String, UploadFileCallback)
+     * @see #uploadFile(Bucket, String, String, UploadFileCallback)
+     * @see #uploadFile(String, String, String, UploadFileCallback)
+     */
+    public boolean cancelUpload(long uploadState) {
+        return _cancelUpload(uploadState);
     }
 
     private java.io.File getAuthFile() throws IllegalStateException {
@@ -1252,6 +1332,8 @@ public class Storj {
 
     private native void _destroyEnv(long env);
 
+    private native void _runEventLoop(long env);
+
     private native void _getInfo(long env, GetInfoCallback callback);
 
     private native void _register(long env, RegisterCallback callback);
@@ -1278,10 +1360,14 @@ public class Storj {
 
     private native void _deleteFile(long env, String bucketId, String fileId, DeleteFileCallback callback);
 
-    private native void _downloadFile(long env, String bucketId, String fileId, String path,
+    private native long _downloadFile(long env, String bucketId, String fileId, String path,
             DownloadFileCallback callback);
 
-    private native void _uploadFile(long env, String bucketId, String fileName, String localPath,
+    private native boolean _cancelDownload(long downloadState);
+
+    private native long _uploadFile(long env, String bucketId, String fileName, String localPath,
             UploadFileCallback callback);
+
+    private native boolean _cancelUpload(long uploadState);
 
 }
