@@ -249,6 +249,33 @@ public class Storj {
     public static final int STORJ_BRIDGE_OFFER_ERROR = 1014;
 
     /**
+     * Error code for general error with requesting a farmer during a download or
+     * upload operation.
+     */
+    public static final int STORJ_FARMER_REQUEST_ERROR = 2000;
+
+    /**
+     * Error code if a request to a farmer timed out during a download or upload
+     * operation.
+     */
+    public static final int STORJ_FARMER_TIMEOUT_ERROR = 2001;
+
+    /**
+     * Error code if a farmer was requested with invalid credentials.
+     */
+    public static final int STORJ_FARMER_AUTH_ERROR = 2002;
+
+    /**
+     * Error code if a farmer is exhausted.
+     */
+    public static final int STORJ_FARMER_EXHAUSTED_ERROR = 2003;
+
+    /**
+     * Error code for farmer integrity problems.
+     */
+    public static final int STORJ_FARMER_INTEGRITY_ERROR = 2004;
+
+    /**
      * Error code if info about the file being uploaded could not be retrieved from
      * the local file system.
      */

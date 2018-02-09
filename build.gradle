@@ -10,7 +10,7 @@ apply plugin: 'maven'
 apply plugin: 'maven-publish'
 
 group = 'io.storj'
-version = '0.6.1'
+version = '0.6.2'
 
 description = """Java bindings for libstorj"""
 
