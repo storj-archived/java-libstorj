@@ -978,7 +978,7 @@ Java_io_storj_libstorj_Storj__1uploadFile(
 
     FILE *fd = fopen(local_path, "r");
 
-    storj_upload_state_t *state;
+    storj_upload_state_t *state = NULL;
 
     if (!fd) {
         error_callback_upload(env, h, 20000 + errno, strerror(errno));
