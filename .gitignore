@@ -24,3 +24,5 @@ hs*.log
 
 # Android Studio project files
 *.iml
+/Debug/
+/Release/
