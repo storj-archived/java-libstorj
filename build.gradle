@@ -89,12 +89,42 @@ model {
     }
 }
 
+def pomConfig = {
+    licenses {
+        license {
+            name "GNU Lesser General Public License v3.0"
+            url "https://www.gnu.org/licenses/lgpl-3.0.txt"
+        }
+    }
+    developers {
+        developer {
+            id "kaloyan-raev"
+            name "Kaloyan Raev"
+            email "kaloyan@storj.io"
+            organization "Storj"
+            organizationUrl "https://storj.io"
+        }
+    }
+    
+    scm {
+        connection "scm:git:git://github.com/Storj/java-libstorj.git"
+        developerConnection "scm:git:ssh://github.com:Storj/java-libstorj.git"
+        url "https://github.com/Storj/java-libstorj"
+    }
+}
+
 publishing {
     publications {
         maven(MavenPublication) {
-            artifactId 'libstorj-java'
-            
             from components.java
+            artifactId 'libstorj-java'
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('description', 'Java bindings for libstorj')
+                root.appendNode('name', 'java-libstorj')
+                root.appendNode('url', 'https://github.com/Storj/java-libstorj')
+                root.children().last() + pomConfig
+            }
         }
     }
 }
@@ -103,6 +133,7 @@ bintray {
     user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
     key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
     configurations = ['archives']
+    publications = ['maven']
     publish = true
     pkg {
         repo = 'maven'
