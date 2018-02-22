@@ -271,6 +271,8 @@ public class StorjTest {
                 Storj.getErrorMessage(Storj.HTTP_BAD_REQUEST));
         Assert.assertEquals("Unauthorized",
                 Storj.getErrorMessage(Storj.HTTP_UNAUTHORIZED));
+        Assert.assertEquals("Forbidden",
+                Storj.getErrorMessage(Storj.HTTP_FORBIDDEN));
         Assert.assertEquals("Not Found",
                 Storj.getErrorMessage(Storj.HTTP_NOT_FOUND));
         Assert.assertEquals("Conflict",

@@ -53,6 +53,15 @@ public class Storj {
     public static final int HTTP_UNAUTHORIZED = 401;
 
     /**
+     * Error code if the requested operation is forbidden.
+     * 
+     * <p>
+     * For example, if the user account has not been activated yet.
+     * </p>
+     */
+    public static final int HTTP_FORBIDDEN = 403;
+
+    /**
      * Error code if the requested resource from the Bridge did not exist.
      * 
      * <p>
@@ -601,6 +610,8 @@ public class Storj {
             return "Bad Request";
         case HTTP_UNAUTHORIZED:
             return "Unauthorized";
+        case HTTP_FORBIDDEN:
+            return "Forbidden";
         case HTTP_NOT_FOUND:
             return "Not Found";
         case HTTP_CONFLICT:
