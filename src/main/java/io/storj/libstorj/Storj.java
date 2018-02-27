@@ -741,8 +741,9 @@ public class Storj {
      * @param pass
      *            the user's password
      * @return {@link #NO_ERROR} if the user and password match;
-     *         {@link #HTTP_UNAUTHORIZED} if the credentials are invalid; or other
-     *         error codes due to network issues.
+     *         {@link #HTTP_UNAUTHORIZED} if the credentials are invalid;
+     *         {@link #HTTP_FORBIDDEN} if the account has not been activated yet; or
+     *         other error codes due to network issues.
      * @throws InterruptedException
      *             if the request was interrupted
      */
@@ -780,11 +781,20 @@ public class Storj {
      * provided keys. It will block until the response is received.
      * </p>
      * 
+     * <p>
+     * If the provided mnemonic could not decrypt any bucket then a second attempt
+     * will be made to decrypt all buckets with empty mnemonic. If this second
+     * attempt is successful then the orignally provided mnemonic will be accepted
+     * as valid. This covers the use case where the user account was created on
+     * app.storj.io and the user has created one or more buckets there.
+     * </p>
+     * 
      * @param keys
      *            the user's keys
      * @return {@link #NO_ERROR} if the user and password match, and the mnemonic
      *         can decrypt the metadata; {@link #HTTP_UNAUTHORIZED} if the
-     *         credentials are invalid; {@link #STORJ_FILE_DECRYPTION_ERROR} if the
+     *         credentials are invalid; {@link #HTTP_FORBIDDEN} if the account has
+     *         not been activated yet; {@link #STORJ_FILE_DECRYPTION_ERROR} if the
      *         user and password match, but the mnemonic could not decrypt any
      *         metadata; or other error codes due to network issues.
      * @throws InterruptedException
@@ -830,7 +840,49 @@ public class Storj {
 
         latch.await();
 
-        return result[0];
+        if (result[0] != STORJ_META_DECRYPTION_ERROR) {
+            return result[0];
+        }
+
+        // The mnemonic could not decrypt any of the buckets. Make another attempt with
+        // empty mnemonic. If all buckets can be decrypted with empty mnemonic then it
+        // seems that account was created on app.storj.io and all buckets were created
+        // there. In this case accept the originally provided mnemonic as valid.
+        env = initEnv(keys.getUser(), keys.getPass());
+        final CountDownLatch latch2 = new CountDownLatch(1);
+        final int[] result2 = { NO_ERROR };
+        
+        _getBuckets(env, new GetBucketsCallback() {
+            @Override
+            public void onBucketsReceived(Bucket[] buckets) {
+                boolean validMnemonic = true;
+
+                for (Bucket bucket : buckets) {
+                    if (!bucket.isDecrypted()) {
+                        validMnemonic = false;
+                        break;
+                    }
+                }
+
+                if (!validMnemonic) {
+                    result2[0] = STORJ_META_DECRYPTION_ERROR;
+                }
+
+                latch2.countDown();
+            }
+
+            @Override
+            public void onError(int code, String message) {
+                result2[0] = code;
+                latch2.countDown();
+            }
+        });
+
+        destroyEnv(env);
+
+        latch2.await();
+
+        return result2[0];
     }
 
     /**
