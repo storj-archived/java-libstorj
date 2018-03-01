@@ -18,28 +18,33 @@ package io.storj.libstorj;
 
 /**
  * Callback interface for receiving the response of the
- * <code>getBucketId()</code> method.
+ * <code>getBucketId()</code> and <code>getBucketIds()</code> methods.
  * 
  * @see Storj#getBucketId(String, GetBucketIdCallback)
+ * @see Storj#getBucketIds(String[], GetBucketIdCallback)
  */
 public interface GetBucketIdCallback {
 
     /**
      * Called if the bucket id was retrieved successfully.
      * 
+     * @param bucketName
+     *            the bucket name the received bucket id applies to
      * @param bucketId
-     *            a bucket id
+     *            the received bucket id
      */
-    void onBucketIdReceived(String bucketId);
+    void onBucketIdReceived(String bucketName, String bucketId);
 
     /**
      * Called if getting the bucket id finished with error.
      * 
+     * @param bucketName
+     *            the bucket name this error applies to
      * @param code
      *            the error code
      * @param message
      *            the error message
      */
-    void onError(int code, String message);
+    void onError(String bucketName, int code, String message);
 
 }

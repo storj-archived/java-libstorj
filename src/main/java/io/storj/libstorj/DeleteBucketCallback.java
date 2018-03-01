@@ -18,26 +18,33 @@ package io.storj.libstorj;
 
 /**
  * Callback interface for receiving the response from the
- * <code>deleteBucket()</code> methods.
+ * <code>deleteBucket()</code> and <code>deleteBuckets()</code> methods.
  * 
  * @see Storj#deleteBucket(Bucket, DeleteBucketCallback)
  * @see Storj#deleteBucket(String, DeleteBucketCallback)
+ * @see Storj#deleteBuckets(Bucket[], DeleteBucketCallback)
+ * @see Storj#deleteBuckets(String[], DeleteBucketCallback)
  */
 public interface DeleteBucketCallback {
 
     /**
      * Called if the bucket was deleted successfully.
+     * 
+     * @param bucketId
+     *            the id of the bucket that was deleted
      */
-    void onBucketDeleted();
+    void onBucketDeleted(String bucketId);
 
     /**
      * Called if deleting the bucket finished with error.
      * 
+     * @param bucketId
+     *            the bucket id this error applies to
      * @param code
      *            the error code
      * @param message
      *            the error message
      */
-    void onError(int code, String message);
+    void onError(String bucketId, int code, String message);
 
 }

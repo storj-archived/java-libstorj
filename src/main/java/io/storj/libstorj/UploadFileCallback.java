@@ -18,12 +18,16 @@ package io.storj.libstorj;
 
 /**
  * Callback interface for receiving the progress of executing the
- * <code>uploadFile()</code> methods.
+ * <code>uploadFile()</code> and <code>uploadFiles()</code> methods.
  * 
  * @see Storj#uploadFile(Bucket, String, UploadFileCallback)
  * @see Storj#uploadFile(String, String, UploadFileCallback)
  * @see Storj#uploadFile(Bucket, String, String, UploadFileCallback)
  * @see Storj#uploadFile(String, String, String, UploadFileCallback)
+ * @see Storj#uploadFiles(Bucket, String[], UploadFileCallback)
+ * @see Storj#uploadFiles(String, String[], UploadFileCallback)
+ * @see Storj#uploadFiles(Bucket, String[], String[], UploadFileCallback)
+ * @see Storj#uploadFiles(String, String[], String[], UploadFileCallback)
  */
 public interface UploadFileCallback {
 

@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Java object wrapper of the libstorj native library.
@@ -906,7 +907,33 @@ public class Storj {
     }
 
     /**
-     * Gets the bucket id by the provided bucket name.
+     * Gets info about the specified list of buckets.
+     * 
+     * <p>
+     * This method will issue a seperate request to the bridge for each bucket id
+     * from the list. The requests will run in parallel. The callback will be
+     * invoked once for each bucket id. The order of invoking the callback is
+     * undetermined and most likely will be different than the order of bucket ids
+     * in the list.
+     * </p>
+     * 
+     * @param bucketIds
+     *            an array of bucket ids
+     * @param callback
+     *            an implementation of the {@link GetBucketCallback} interface to
+     *            receive the response
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     */
+    public void getBuckets(String bucketIds[], GetBucketCallback callback) throws KeysNotFoundException {
+        checkEnv();
+        for (String bucketId : bucketIds) {
+            _getBucket(env, bucketId, callback);
+        }
+    }
+
+    /**
+     * Gets the bucket id by the specified bucket name.
      * 
      * @param bucketName
      *            the bucket name
@@ -919,6 +946,32 @@ public class Storj {
     public void getBucketId(String bucketName, GetBucketIdCallback callback) throws KeysNotFoundException {
         checkEnv();
         _getBucketId(env, bucketName, callback);
+    }
+
+    /**
+     * Gets the bucket ids for the specified list of bucket names.
+     * 
+     * <p>
+     * This method will issue a seperate request to the bridge for each bucket name
+     * from the list. The requests will run in parallel. The callback will be
+     * invoked once for each bucket name. The order of invoking the callback is
+     * undetermined and most likely will be different than the order of bucket names
+     * in the list.
+     * </p>
+     * 
+     * @param bucketNames
+     *            an array of bucket names
+     * @param callback
+     *            an implementation of the {@link GetBucketIdCallback} interface to
+     *            receive the response
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     */
+    public void getBucketIds(String[] bucketNames, GetBucketIdCallback callback) throws KeysNotFoundException {
+        checkEnv();
+        for (String bucketName : bucketNames) {
+            _getBucketId(env, bucketName, callback);
+        }
     }
 
     /**
@@ -935,6 +988,32 @@ public class Storj {
     public void createBucket(String bucketName, CreateBucketCallback callback) throws KeysNotFoundException {
         checkEnv();
         _createBucket(env, bucketName, callback);
+    }
+
+    /**
+     * Creates a list of new buckets.
+     * 
+     * <p>
+     * This method will issue a seperate request to the bridge for each bucket name
+     * from the list. The requests will run in parallel. The callback will be
+     * invoked once for each bucket name. The order of invoking the callback is
+     * undetermined and most likely will be different than the order of bucket names
+     * in the list.
+     * </p>
+     * 
+     * @param bucketNames
+     *            an array of bucket names
+     * @param callback
+     *            an implementation of the {@link CreateBucketCallback} interface to
+     *            receive the response
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     */
+    public void createBuckets(String[] bucketNames, final CreateBucketCallback callback) throws KeysNotFoundException {
+        checkEnv();
+        for (final String bucketName : bucketNames) {
+            _createBucket(env, bucketName, callback);
+        }
     }
 
     /**
@@ -969,6 +1048,54 @@ public class Storj {
     }
 
     /**
+     * Deletes the specified list of buckets.
+     * 
+     * <p>
+     * This method will issue a seperate request to the bridge for each bucket from
+     * the list. The requests will run in parallel. The callback will be invoked
+     * once for each bucket. The order of invoking the callback is undetermined and
+     * most likely will be different than the order of buckets in the list.
+     * </p>
+     * 
+     * @param buckets
+     *            an array of {@link Bucket} objects
+     * @param callback
+     *            an implementation of the {@link DeleteBucketCallback} interface to
+     *            receive the response
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     */
+    public void deleteBuckets(Bucket[] buckets, DeleteBucketCallback callback) throws KeysNotFoundException {
+        deleteBuckets(getBucketIds(buckets), callback);
+    }
+
+    /**
+     * Deletes the specified list of buckets.
+     * 
+     * <p>
+     * This method will issue a seperate request to the bridge for each bucket id
+     * from the list. The requests will run in parallel. The callback will be
+     * invoked once for each bucket id. The order of invoking the callback is
+     * undetermined and most likely will be different than the order of bucket ids
+     * in the list.
+     * </p>
+     * 
+     * @param bucketIds
+     *            an array of bucket ids
+     * @param callback
+     *            an implementation of the {@link DeleteBucketCallback} interface to
+     *            receive the response
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     */
+    public void deleteBuckets(String[] bucketIds, DeleteBucketCallback callback) throws KeysNotFoundException {
+        checkEnv();
+        for (String bucketId : bucketIds) {
+            _deleteBucket(env, bucketId, callback);
+        }
+    }
+
+    /**
      * Gets a list of all files in a bucket.
      * 
      * @param bucket
@@ -997,6 +1124,54 @@ public class Storj {
     public void listFiles(String bucketId, ListFilesCallback callback) throws KeysNotFoundException {
         checkEnv();
         _listFiles(env, bucketId, callback);
+    }
+
+    /**
+     * Gets a list of all files for each bucket in the specified list.
+     * 
+     * <p>
+     * This method will issue a seperate request to the bridge for each bucket from
+     * the list. The requests will run in parallel. The callback will be invoked
+     * once for each bucket. The order of invoking the callback is undetermined and
+     * most likely will be different than the order of buckets in the list.
+     * </p>
+     * 
+     * @param buckets
+     *            an array of {@link Bucket} objects
+     * @param callback
+     *            an implementation of the {@link ListFilesCallback} interface to
+     *            receive the response
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     */
+    public void listFiles(Bucket[] buckets, ListFilesCallback callback) throws KeysNotFoundException {
+        listFiles(getBucketIds(buckets), callback);
+    }
+
+    /**
+     * Gets a list of all files for each bucket in the specified list.
+     * 
+     * <p>
+     * This method will issue a seperate request to the bridge for each bucket id
+     * from the list. The requests will run in parallel. The callback will be
+     * invoked once for each bucket id. The order of invoking the callback is
+     * undetermined and most likely will be different than the order of bucket ids
+     * in the list.
+     * </p>
+     * 
+     * @param bucketIds
+     *            an array of bucket ids
+     * @param callback
+     *            an implementation of the {@link ListFilesCallback} interface to
+     *            receive the response
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     */
+    public void listFiles(String[] bucketIds, ListFilesCallback callback) throws KeysNotFoundException {
+        checkEnv();
+        for (String bucketId : bucketIds) {
+            _listFiles(env, bucketId, callback);
+        }
     }
 
     /**
@@ -1035,6 +1210,57 @@ public class Storj {
     }
 
     /**
+     * Gets info about the specified list of files.
+     * 
+     * <p>
+     * This method will issue a seperate request to the bridge for each file id from
+     * the list. The requests will run in parallel. The callback will be invoked
+     * once for each file id. The order of invoking the callback is undetermined and
+     * most likely will be different than the order of file ids in the list.
+     * </p>
+     * 
+     * @param bucket
+     *            the {@link Bucket} containing the files
+     * @param fileIds
+     *            an array of file ids
+     * @param callback
+     *            an implementation of the {@link GetFileCallback} interface to
+     *            receive the response
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     */
+    public void getFiles(Bucket bucket, String[] fileIds, GetFileCallback callback) throws KeysNotFoundException {
+        getFiles(bucket.getId(), fileIds, callback);
+    }
+
+    /**
+     * Gets info about the specified list of files.
+     * 
+     * <p>
+     * This method will issue a seperate request to the bridge for each file id from
+     * the list. The requests will run in parallel. The callback will be invoked
+     * once for each file id. The order of invoking the callback is undetermined and
+     * most likely will be different than the order of file ids in the list.
+     * </p>
+     * 
+     * @param bucketId
+     *            the id of the bucket containing the files
+     * @param fileIds
+     *            an array of file ids
+     * @param callback
+     *            an implementation of the {@link GetFileCallback} interface to
+     *            receive the response
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     */
+    public void getFiles(String bucketId, String[] fileIds, GetFileCallback callback) throws KeysNotFoundException {
+        checkEnv();
+        for (String fileId : fileIds) {
+            _getFile(env, bucketId, fileId, callback);
+        }
+    }
+
+    /**
      * Gets the file id by the provided file name.
      * 
      * @param bucket
@@ -1067,6 +1293,59 @@ public class Storj {
     public void getFileId(String bucketId, String fileName, GetFileIdCallback callback) throws KeysNotFoundException {
         checkEnv();
         _getFileId(env, bucketId, fileName, callback);
+    }
+
+    /**
+     * Gets the file ids for the specified list of file names.
+     * 
+     * <p>
+     * This method will issue a seperate request to the bridge for each file name
+     * from the list. The requests will run in parallel. The callback will be
+     * invoked once for each file name. The order of invoking the callback is
+     * undetermined and most likely will be different than the order of file names
+     * in the list.
+     * </p>
+     * 
+     * @param bucket
+     *            the {@link Bucket} containing the files
+     * @param fileNames
+     *            an array of file names
+     * @param callback
+     *            an implementation of the {@link GetFileIdCallback} interface to
+     *            receive the response
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     */
+    public void getFileIds(Bucket bucket, String[] fileNames, GetFileIdCallback callback) throws KeysNotFoundException {
+        getFileIds(bucket.getId(), fileNames, callback);
+    }
+    
+    /**
+     * Gets the file ids for the specified list of file names.
+     * 
+     * <p>
+     * This method will issue a seperate request to the bridge for each file name
+     * from the list. The requests will run in parallel. The callback will be
+     * invoked once for each file name. The order of invoking the callback is
+     * undetermined and most likely will be different than the order of file names
+     * in the list.
+     * </p>
+     * 
+     * @param bucketId
+     *            the id of the bucket containing the files
+     * @param fileNames
+     *            an array of file names
+     * @param callback
+     *            an implementation of the {@link GetFileIdCallback} interface to
+     *            receive the response
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     */
+    public void getFileIds(String bucketId, String[] fileNames, GetFileIdCallback callback) throws KeysNotFoundException {
+        checkEnv();
+        for (String fileName : fileNames) {
+            _getFileId(env, bucketId, fileName, callback);
+        }
     }
 
     /**
@@ -1103,6 +1382,57 @@ public class Storj {
         checkEnv();
         _deleteFile(env, bucketId, fileId, callback);
     }
+    
+    /**
+     * Deletes the specified list of files.
+     * 
+     * <p>
+     * This method will issue a seperate request to the bridge for each file from
+     * the list. The requests will run in parallel. The callback will be invoked
+     * once for each file. The order of invoking the callback is undetermined and
+     * most likely will be different than the order of files in the list.
+     * </p>
+     * 
+     * @param bucket
+     *            the {@link Bucket} containing the files
+     * @param files
+     *            an array of {@link File} objects to delete
+     * @param callback
+     *            an implementation of the {@link DeleteFileCallback} interface to
+     *            receive the response
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     */
+    public void deleteFiles(Bucket bucket, File[] files, DeleteFileCallback callback) throws KeysNotFoundException {
+        deleteFiles(bucket.getId(), getFileIds(files), callback);
+    }
+
+    /**
+     * Deletes the specified list of files.
+     * 
+     * <p>
+     * This method will issue a seperate request to the bridge for each file id from
+     * the list. The requests will run in parallel. The callback will be invoked
+     * once for each file id. The order of invoking the callback is undetermined and
+     * most likely will be different than the order of file ids in the list.
+     * </p>
+     * 
+     * @param bucketId
+     *            the id of the bucket containing the files
+     * @param fileIds
+     *            an array of file ids to delete
+     * @param callback
+     *            an implementation of the {@link DeleteFileCallback} interface to
+     *            receive the response
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     */
+    public void deleteFiles(String bucketId, String[] fileIds, DeleteFileCallback callback) throws KeysNotFoundException {
+        checkEnv();
+        for (String fileId : fileIds) {
+            _deleteFile(env, bucketId, fileId, callback);
+        }
+    }
 
     /**
      * Downloads a file to the default download directory.
@@ -1123,6 +1453,7 @@ public class Storj {
      *         {@link #_cancelDownload(long)}
      * @throws KeysNotFoundException
      *             if the user's keys have not been imported yet
+     * @see #setDownloadDirectory(java.io.File)
      * @see #cancelDownload(long)
      */
     public long downloadFile(Bucket bucket, File file, DownloadFileCallback callback) throws KeysNotFoundException {
@@ -1149,8 +1480,7 @@ public class Storj {
      *             if the user's keys have not been imported yet
      * @see #cancelDownload(long)
      */
-    public long downloadFile(Bucket bucket, File file, String localPath, DownloadFileCallback callback)
-            throws KeysNotFoundException {
+    public long downloadFile(Bucket bucket, File file, String localPath, DownloadFileCallback callback) throws KeysNotFoundException {
         return downloadFile(bucket.getId(), file.getId(), localPath, callback);
     }
 
@@ -1172,10 +1502,114 @@ public class Storj {
      *             if the user's keys have not been imported yet
      * @see #cancelDownload(long)
      */
-    public long downloadFile(String bucketId, String fileId, String localPath, DownloadFileCallback callback)
-            throws KeysNotFoundException {
+    public long downloadFile(String bucketId, String fileId, String localPath, DownloadFileCallback callback) throws KeysNotFoundException {
         checkEnv();
         return _downloadFile(env, bucketId, fileId, localPath, callback);
+    }
+
+    /**
+     * Downloads the specified list of files to the default download directory.
+     * 
+     * <p>
+     * The default download directory can be configured using
+     * {@link #setDownloadDirectory(java.io.File)}.
+     * </p>
+     * 
+     * <p>
+     * This method will download all files in parallel. The callback will be invoked
+     * for all files. The order of invoking the callback is undetermined and most
+     * likely will be different than the order of files in the list.
+     * </p>
+     * 
+     * @param bucket
+     *            the {@link Bucket} containing the files
+     * @param files
+     *            an array of {@link File} objects to download
+     * @param callback
+     *            an implementation of the {@link DownloadFileCallback} interface to
+     *            receive the download progress
+     * @return an array with pointers to the download state of each file that can be
+     *         passed to {@link #_cancelDownload(long)}
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     * @see #setDownloadDirectory(java.io.File)
+     * @see #cancelDownload(long)
+     */
+    public long[] downloadFiles(Bucket bucket, File[] files, DownloadFileCallback callback) throws KeysNotFoundException {
+        checkDownloadDir();
+
+        String[] localPaths = new String[files.length];
+        for (int i = 0; i < files.length; i++) {
+            localPaths[i] = new java.io.File(downloadDir, files[i].getName()).getPath();
+        }
+
+        return downloadFiles(bucket, files, localPaths, callback);
+    }
+
+    /**
+     * Downloads the specified list of files to the provided local paths.
+     * 
+     * <p>
+     * This method will download all files in parallel. The callback will be invoked
+     * for all files. The order of invoking the callback is undetermined and most
+     * likely will be different than the order of files in the list.
+     * </p>
+     * 
+     * @param bucket
+     *            the {@link Bucket} containing the files
+     * @param files
+     *            an array of {@link File} objects to download
+     * @param localPaths
+     *            an array of local paths (including file name) to download the
+     *            files to
+     * @param callback
+     *            an implementation of the {@link DownloadFileCallback} interface to
+     *            receive the download progress
+     * @return an array with pointers to the download state of each file that can be
+     *         passed to {@link #_cancelDownload(long)}
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     * @see #cancelDownload(long)
+     */
+    public long[] downloadFiles(Bucket bucket, File[] files, String[] localPaths, DownloadFileCallback callback) throws KeysNotFoundException {
+        return downloadFiles(bucket.getId(), getFileIds(files), localPaths, callback);
+    }
+
+    /**
+     * Downloads the specified list of files to the provided local paths.
+     * 
+     * <p>
+     * This method will download all files in parallel. The callback will be invoked
+     * for all files. The order of invoking the callback is undetermined and most
+     * likely will be different than the order of file ids in the list.
+     * </p>
+     * 
+     * @param bucketId
+     *            the id of the bucket containing the files
+     * @param fileIds
+     *            an array of file ids to download
+     * @param localPaths
+     *            an array of local paths (including file name) to download the
+     *            files to
+     * @param callback
+     *            an implementation of the {@link DownloadFileCallback} interface to
+     *            receive the download progress
+     * @return an array with pointers to the download state of each file that can be
+     *         passed to {@link #_cancelDownload(long)}
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     * @see #cancelDownload(long)
+     */
+    public long[] downloadFiles(String bucketId, String[] fileIds, String[] localPaths, DownloadFileCallback callback) throws KeysNotFoundException {
+        checkEnv();
+
+        long[] states = new long[fileIds.length];
+
+        for (int i = 0; i < fileIds.length; i++) {
+            states[i] = _downloadFile(env, bucketId, fileIds[i], localPaths[i], callback);
+        }
+
+        return states;
     }
 
     /**
@@ -1240,8 +1674,7 @@ public class Storj {
      *             if the user's keys have not been imported yet
      * @see #cancelUpload(long)
      */
-    public long uploadFile(String bucketId, String localPath, UploadFileCallback callback)
-            throws KeysNotFoundException {
+    public long uploadFile(String bucketId, String localPath, UploadFileCallback callback) throws KeysNotFoundException {
         return uploadFile(bucketId, new java.io.File(localPath).getName(), localPath, callback);
     }
 
@@ -1295,10 +1728,148 @@ public class Storj {
      *             if the user's keys have not been imported yet
      * @see #cancelUpload(long)
      */
-    public long uploadFile(String bucketId, String fileName, String localPath, UploadFileCallback callback)
-            throws KeysNotFoundException {
+    public long uploadFile(String bucketId, String fileName, String localPath, UploadFileCallback callback) throws KeysNotFoundException {
         checkEnv();
         return _uploadFile(env, bucketId, fileName, localPath, callback);
+    }
+
+    /**
+     * Uploads the specified list of files.
+     * 
+     * <p>
+     * This will upload the files with the same name they have on the local storage.
+     * </p>
+     * 
+     * <p>
+     * This method will upload all files in parallel. The callback will be invoked
+     * for all files. The order of invoking the callback is undetermined and most
+     * likely will be different than the order of file ids in the list.
+     * </p>
+     * 
+     * @param bucket
+     *            the {@link Bucket} to upload the files to
+     * @param localPaths
+     *            the local paths (including file name) of the files to upload
+     * @param callback
+     *            an implementation of the {@link UploadFileCallback} interface to
+     *            receive the upload progress
+     * @return an array of pointers to the upload state of each file that can be
+     *         passed to {@link #_cancelUpload(long)}
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     * @see #cancelUpload(long)
+     */
+    public long[] uploadFiles(Bucket bucket, String[] localPaths, UploadFileCallback callback) throws KeysNotFoundException {
+        return uploadFiles(bucket.getId(), localPaths, callback);
+    }
+
+    /**
+     * Uploads the specified list of files.
+     * 
+     * <p>
+     * This will upload the files with the same name they have on the local storage.
+     * </p>
+     * 
+     * <p>
+     * This method will upload all files in parallel. The callback will be invoked
+     * for all files. The order of invoking the callback is undetermined and most
+     * likely will be different than the order of file ids in the list.
+     * </p>
+     * 
+     * @param bucketId
+     *            the id of the bucket to upload the files to
+     * @param localPaths
+     *            the local paths (including file name) of the files to upload
+     * @param callback
+     *            an implementation of the {@link UploadFileCallback} interface to
+     *            receive the upload progress
+     * @return an array of pointers to the upload state of each file that can be
+     *         passed to {@link #_cancelUpload(long)}
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     * @see #cancelUpload(long)
+     */
+    public long[] uploadFiles(String bucketId, String[] localPaths, UploadFileCallback callback) throws KeysNotFoundException {
+        String[] fileNames = new String[localPaths.length];
+        for (int i = 0; i < localPaths.length; i++) {
+            fileNames[i] = new java.io.File(localPaths[i]).getName();
+        }
+
+        return uploadFiles(bucketId, fileNames, localPaths, callback);
+    }
+
+    /**
+     * Uploads the specified list of files.
+     * 
+     * <p>
+     * This allows uploading the files with a different name than the ones they have
+     * on the local storage.
+     * </p>
+     * 
+     * <p>
+     * This method will upload all files in parallel. The callback will be invoked
+     * for all files. The order of invoking the callback is undetermined and most
+     * likely will be different than the order of file ids in the list.
+     * </p>
+     * 
+     * @param bucket
+     *            the {@link Bucket} to upload the files to
+     * @param fileNames
+     *            an array of names to assign to the uploaded files
+     * @param localPaths
+     *            the local paths (including file name) of the files to upload
+     * @param callback
+     *            an implementation of the {@link UploadFileCallback} interface to
+     *            receive the upload progress
+     * @return an array of pointers to the upload state of each file that can be
+     *         passed to {@link #_cancelUpload(long)}
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     * @see #cancelUpload(long)
+     */
+    public long[] uploadFiles(Bucket bucket, String[] fileNames, String[] localPaths, UploadFileCallback callback) throws KeysNotFoundException {
+        return uploadFiles(bucket.getId(), fileNames, localPaths, callback);
+    }
+
+    /**
+     * Uploads the specified list of files.
+     * 
+     * <p>
+     * This allows uploading the files with a different name than the ones they have
+     * on the local storage.
+     * </p>
+     * 
+     * <p>
+     * This method will upload all files in parallel. The callback will be invoked
+     * for all files. The order of invoking the callback is undetermined and most
+     * likely will be different than the order of file ids in the list.
+     * </p>
+     * 
+     * @param bucketId
+     *            the id of the bucket to upload the files to
+     * @param fileNames
+     *            an array of names to assign to the uploaded files
+     * @param localPaths
+     *            the local paths (including file name) of the files to upload
+     * @param callback
+     *            an implementation of the {@link UploadFileCallback} interface to
+     *            receive the upload progress
+     * @return an array of pointers to the upload state of each file that can be
+     *         passed to {@link #_cancelUpload(long)}
+     * @throws KeysNotFoundException
+     *             if the user's keys have not been imported yet
+     * @see #cancelUpload(long)
+     */
+    public long[] uploadFiles(String bucketId, String[] fileNames, String[] localPaths, UploadFileCallback callback) throws KeysNotFoundException {
+        checkEnv();
+
+        long[] states = new long[fileNames.length];
+
+        for (int i = 0; i < fileNames.length; i++) {
+            states[i] = _uploadFile(env, bucketId, fileNames[i], localPaths[i], callback);
+        }
+
+        return states;
     }
 
     /**
@@ -1318,6 +1889,22 @@ public class Storj {
      */
     public boolean cancelUpload(long uploadState) {
         return _cancelUpload(uploadState);
+    }
+
+    private String[] getBucketIds(Bucket[] buckets) {
+        String[] bucketIds = new String[buckets.length];
+        for (int i = 0; i < buckets.length; i++) {
+            bucketIds[i] = buckets[i].getId();
+        }
+        return bucketIds;
+    }
+
+    private String[] getFileIds(File[] files) {
+        String[] fileIds = new String[files.length];
+        for (int i = 0; i < files.length; i++) {
+            fileIds[i] = files[i].getId();
+        }
+        return fileIds;
     }
 
     private java.io.File getAuthFile() throws IllegalStateException {
@@ -1448,6 +2035,250 @@ public class Storj {
             }
         }
 
+    }
+
+
+    public static void main(String[] args) throws InterruptedException {
+        // bucketsTest();
+        filesTest();
+    }
+
+    private static void bucketsTest() throws InterruptedException {
+        String[] bucketNames = {
+                "My Test Bucket 0",
+                "My Test Bucket 1",
+                "My Test Bucket 2",
+                "My Test Bucket 3",
+                "My Test Bucket 4",
+                "My Test Bucket 5",
+                "My Test Bucket 6",
+                "My Test Bucket 7",
+                "My Test Bucket 8",
+                "My Test Bucket 9",
+        };
+
+        String[] bucketIds = {
+                "d8ebe4cb1c0c3a01823829cc",
+                "486a3754ad614d73180bfe09",
+                "9b5d36f610c4e1e801c6ecd8",
+                "5b87a4566f39ba0943be969f",
+                "6cc4fce8a1c60995f0d39992",
+                "e9deeed31c73bdab2fa79fae",
+                "3709b10093d557d45056cc72",
+                "34890617b98e8cca1fa10100",
+                "abe0c0289779a4a7e5b55c3d",
+                "545ce979528ac558450a76f6",
+        };
+
+        Storj storj = new Storj();
+
+        long start = System.currentTimeMillis();
+
+        final CountDownLatch latch = new CountDownLatch(10);
+        storj.createBuckets(bucketNames, new CreateBucketCallback() {
+            @Override
+            public void onError(String bucketName, int code, String message) {
+                System.out.printf("[%s] [%d] %s: %s\n", Thread.currentThread().getName(), code, message, bucketName);
+                latch.countDown();
+            }
+
+            @Override
+            public void onBucketCreated(Bucket bucket) {
+                System.out.printf("[%s] Bucket created: %s %s\n", Thread.currentThread().getName(), bucket.getId(), bucket.getName());
+                latch.countDown();
+            }
+        });
+        latch.await();
+
+        final CountDownLatch latch2 = new CountDownLatch(10);
+        storj.getBuckets(bucketIds, new GetBucketCallback() {
+            @Override
+            public void onError(String bucketId, int code, String message) {
+                System.out.printf("[%s] [%d] %s: %s\n", Thread.currentThread().getName(), code, message, bucketId);
+                latch2.countDown();
+            }
+
+            @Override
+            public void onBucketReceived(Bucket bucket) {
+                System.out.printf("[%s] %s --> %s\n", Thread.currentThread().getName(), bucket.getId(),
+                        bucket.getName());
+                latch2.countDown();
+            }
+        });
+        latch2.await();
+
+        final CountDownLatch latch3 = new CountDownLatch(10);
+        storj.getBucketIds(bucketNames, new GetBucketIdCallback() {
+            @Override
+            public void onError(String bucketName, int code, String message) {
+                System.out.printf("[%s] [%d] %s: %s\n", Thread.currentThread().getName(), code, message, bucketName);
+                latch3.countDown();
+            }
+
+            @Override
+            public void onBucketIdReceived(String bucketName, String bucketId) {
+                System.out.printf("[%s] %s --> %s\n", Thread.currentThread().getName(), bucketName, bucketId);
+                latch3.countDown();
+            }
+        });
+        latch3.await();
+
+        final CountDownLatch latch4 = new CountDownLatch(10);
+        storj.listFiles(bucketIds, new ListFilesCallback() {
+            @Override
+            public void onError(String bucketId, int code, String message) {
+                System.out.printf("[%s] [%d] %s: %s\n", Thread.currentThread().getName(), code, message, bucketId);
+                latch4.countDown();
+            }
+
+            @Override
+            public void onFilesReceived(String bucketId, File[] files) {
+                System.out.printf("[%s] Listing for %s:\n", Thread.currentThread().getName(), bucketId);
+                for (File file : files) {
+                    System.out.printf("[%s] %s %s\n", Thread.currentThread().getName(), file.getId(), file.getName());
+                }
+                latch4.countDown();
+            }
+        });
+        latch4.await();
+
+        final CountDownLatch latch5 = new CountDownLatch(10);
+        storj.deleteBuckets(bucketIds, new DeleteBucketCallback() {
+            @Override
+            public void onError(String bucketId, int code, String message) {
+                System.out.printf("[%s] [%d] %s: %s\n", Thread.currentThread().getName(), code, message, bucketId);
+                latch5.countDown();
+            }
+
+            @Override
+            public void onBucketDeleted(String bucketId) {
+                System.out.printf("[%s] Bucket deleted: %s\n", Thread.currentThread().getName(), bucketId);
+                latch5.countDown();
+            }
+        });
+        latch5.await();
+
+        System.out.printf("Time: %d ms\n", System.currentTimeMillis() - start);
+
+        storj.destroy();
+    }
+
+    private static void filesTest() throws InterruptedException {
+        String bucketId = "d9d75ed67ef0dd107df8f6f0";
+
+        String[] fileIds = {
+                "d97769f8b45f201528a2fe78",
+                "0c412f23bb50131d440cf205",
+                "25bb9bce99c02d36e0289c2c"
+        };
+
+        String[] fileNames = {
+                "goobox-sync-storj-0.0.22.jar",
+                "montserrat.zip",
+                "goobox-sync-storj-0.0.23-win64.zip"
+        };
+
+        String[] localPaths = {
+                "/tmp/goobox-sync-storj-0.0.22.jar",
+                "/tmp/montserrat.zip",
+                "/tmp/goobox-sync-storj-0.0.23-win64.zip"
+        };
+
+        Storj storj = new Storj();
+
+        final CountDownLatch latch = new CountDownLatch(3);
+        storj.uploadFiles(bucketId, fileNames, localPaths, new UploadFileCallback() {
+            @Override
+            public void onProgress(String filePath, double progress, long uploadedBytes, long totalBytes) {
+                System.out.printf("Uploading %s: %d%% - %d/%d\n", filePath, (int) (progress * 100), uploadedBytes, totalBytes);
+            }
+
+            @Override
+            public void onError(String filePath, int code, String message) {
+                System.out.printf("Error uploading %s: %s (%d)\n", filePath, message, code);
+                latch.countDown();
+            }
+
+            @Override
+            public void onComplete(String filePath, File file) {
+                System.out.printf("File %s uploaded as %s\n", filePath, file.getId());
+                latch.countDown();
+            }
+        });
+        latch.await();
+
+        final CountDownLatch latch2 = new CountDownLatch(3);
+        storj.getFiles(bucketId, fileIds, new GetFileCallback() {
+            @Override
+            public void onError(String fileId, int code, String message) {
+                System.out.printf("[%s] [%d] %s: %s\n", Thread.currentThread().getName(), code, message, fileId);
+                latch2.countDown();
+            }
+
+            @Override
+            public void onFileReceived(File file) {
+                System.out.printf("[%s] %s --> %s\n", Thread.currentThread().getName(), file.getId(), file.getName());
+                latch2.countDown();
+            }
+        });
+        latch2.await();
+
+        final CountDownLatch latch3 = new CountDownLatch(3);
+        storj.getFileIds(bucketId, fileNames, new GetFileIdCallback() {
+            @Override
+            public void onError(String fileName, int code, String message) {
+                System.out.printf("[%s] [%d] %s: %s\n", Thread.currentThread().getName(), code, message, fileName);
+                latch3.countDown();
+            }
+
+            @Override
+            public void onFileIdReceived(String fileName, String fileId) {
+                System.out.printf("[%s] %s --> %s\n", Thread.currentThread().getName(), fileName, fileId);
+                latch3.countDown();
+            }
+        });
+        latch3.await();
+
+        final CountDownLatch latch4 = new CountDownLatch(3);
+        storj.downloadFiles(bucketId, fileIds, localPaths, new DownloadFileCallback() {
+            @Override
+            public void onProgress(String fileId, double progress, long downloadedBytes,
+                    long totalBytes) {
+                System.out.printf("Downloading %s: %d%% - %d/%d\n", fileId, (int) (progress *
+                        100), downloadedBytes, totalBytes);
+            }
+
+            @Override
+            public void onError(String fileId, int code, String message) {
+                System.out.printf("Error downloading %s: %s (%d)\n", fileId, message, code);
+                latch4.countDown();
+            }
+
+            @Override
+            public void onComplete(String fileId, String localPath) {
+                System.out.printf("File %s downloaded to %s\n", fileId, localPath);
+                latch4.countDown();
+            }
+        });
+        latch4.await();
+
+        final CountDownLatch latch5 = new CountDownLatch(3);
+        storj.deleteFiles(bucketId, fileIds, new DeleteFileCallback() {
+            @Override
+            public void onError(String fileId, int code, String message) {
+                System.out.printf("[%s] [%d] %s: %s\n", Thread.currentThread().getName(), code, message, fileId);
+                latch5.countDown();
+            }
+
+            @Override
+            public void onFileDeleted(String fileId) {
+                System.out.printf("[%s] File deleted: %s\n", Thread.currentThread().getName(), fileId);
+                latch5.countDown();
+            }
+        });
+        latch5.await();
+
+        storj.destroy();
     }
 
 }

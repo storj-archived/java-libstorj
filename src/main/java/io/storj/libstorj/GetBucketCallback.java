@@ -18,9 +18,15 @@ package io.storj.libstorj;
 
 /**
  * Callback interface for receiving the response of the <code>getBucket()</code>
- * method.
+ * and <code>getBuckets()</code> methods.
+ * 
+ * <p>
+ * If info is requested for multiple buckets then this callback will be invoked
+ * once for each bucket.
+ * </p>
  * 
  * @see Storj#getBucket(String, GetBucketCallback)
+ * @see Storj#getBuckets(String[], GetBucketCallback)
  */
 public interface GetBucketCallback {
 
@@ -35,11 +41,13 @@ public interface GetBucketCallback {
     /**
      * Called if getting info about the bucket finished with error.
      * 
+     * @param bucketId
+     *            the bucket id this error applies to
      * @param code
      *            the error code
      * @param message
      *            the error message
      */
-    void onError(int code, String message);
+    void onError(String bucketId, int code, String message);
 
 }

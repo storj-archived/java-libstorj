@@ -18,9 +18,10 @@ package io.storj.libstorj;
 
 /**
  * Callback interface for receiving the response from the
- * <code>createBucket()</code> method.
+ * <code>createBucket()</code> and <code>createBuckets()</code> methods.
  * 
  * @see Storj#createBucket(String, CreateBucketCallback)
+ * @see Storj#createBuckets(String[], CreateBucketCallback)
  */
 public interface CreateBucketCallback {
 
@@ -35,11 +36,13 @@ public interface CreateBucketCallback {
     /**
      * Called if creating the bucket finished with error.
      * 
+     * @param bucketName
+     *            the bucket name this error applies to
      * @param code
      *            the error code
      * @param message
      *            the error message
      */
-    void onError(int code, String message);
+    void onError(String bucketName, int code, String message);
 
 }

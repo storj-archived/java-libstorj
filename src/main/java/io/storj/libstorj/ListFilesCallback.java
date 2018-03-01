@@ -22,25 +22,31 @@ package io.storj.libstorj;
  * 
  * @see Storj#listFiles(Bucket, ListFilesCallback)
  * @see Storj#listFiles(String, ListFilesCallback)
+ * @see Storj#listFiles(Bucket[], ListFilesCallback)
+ * @see Storj#listFiles(String[], ListFilesCallback)
  */
 public interface ListFilesCallback {
 
     /**
      * Called if the files list was retrieved successfully.
      * 
+     * @param bucketId
+     *            the bucket id the received file list applies to
      * @param files
      *            an array of {@link File} objects with the result
      */
-    void onFilesReceived(File[] files);
+    void onFilesReceived(String bucketId, File[] files);
 
     /**
      * Called if getting the files list finished with error.
      * 
+     * @param bucketId
+     *            the bucket id this error applies to
      * @param code
      *            the error code
      * @param message
      *            the error message
      */
-    void onError(int code, String message);
+    void onError(String bucketId, int code, String message);
 
 }

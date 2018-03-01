@@ -18,29 +18,35 @@ package io.storj.libstorj;
 
 /**
  * Callback interface for receiving the response from the
- * <code>getFileId()</code> methods.
+ * <code>getFileId()</code> and <code>getFileIds()</code> methods.
  * 
  * @see Storj#getFileId(String, String, GetFileIdCallback)
  * @see Storj#getFileId(String, String, GetFileIdCallback)
+ * @see Storj#getFileIds(Bucket, String[], GetFileIdCallback)
+ * @see Storj#getFileIds(String, String[], GetFileIdCallback)
  */
 public interface GetFileIdCallback {
 
     /**
      * Called if the file id was retrieved successfully.
      * 
+     * @param fileName
+     *            the file name the received file id applies to
      * @param fileId
-     *            a file id
+     *            the received file id
      */
-    void onFileIdReceived(String fileId);
+    void onFileIdReceived(String fileName, String fileId);
 
     /**
      * Called if getting the file id finished with error.
      * 
+     * @param fileName
+     *            the file name this error applies to
      * @param code
      *            the error code
      * @param message
      *            the error message
      */
-    void onError(int code, String message);
+    void onError(String fileName, int code, String message);
 
 }

@@ -18,26 +18,33 @@ package io.storj.libstorj;
 
 /**
  * Callback interface for receiving the response from the
- * <code>deleteFile()</code> methods.
+ * <code>deleteFile()</code> and <code>deleteFiles()</code> methods.
  * 
  * @see Storj#deleteFile(Bucket, File, DeleteFileCallback)
  * @see Storj#deleteFile(String, String, DeleteFileCallback)
+ * @see Storj#deleteFiles(Bucket, File[], DeleteFileCallback)
+ * @see Storj#deleteFiles(String, String[], DeleteFileCallback)
  */
 public interface DeleteFileCallback {
 
     /**
      * Called if the file was deleted successfully.
+     * 
+     * @param fileId
+     *            the id of the file that was deleted
      */
-    void onFileDeleted();
+    void onFileDeleted(String fileId);
 
     /**
      * Called if deleting the file finished with error.
      * 
+     * @param fileId
+     *            the file id this error applies to
      * @param code
      *            the error code
      * @param message
      *            the error message
      */
-    void onError(int code, String message);
+    void onError(String fileId, int code, String message);
 
 }

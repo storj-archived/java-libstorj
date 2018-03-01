@@ -18,11 +18,14 @@ package io.storj.libstorj;
 
 /**
  * Callback interface for receiving the progress of executing the
- * <code>downloadFile()</code> methods.
+ * <code>downloadFile()</code> and <code>downloadFiles()</code> methods.
  * 
  * @see Storj#downloadFile(Bucket, File, DownloadFileCallback)
  * @see Storj#downloadFile(Bucket, File, String, DownloadFileCallback)
  * @see Storj#downloadFile(String, String, String, DownloadFileCallback)
+ * @see Storj#downloadFiles(Bucket, File[], DownloadFileCallback)
+ * @see Storj#downloadFiles(Bucket, File[], String[], DownloadFileCallback)
+ * @see Storj#downloadFiles(String, String[], String[], DownloadFileCallback)
  */
 public interface DownloadFileCallback {
 

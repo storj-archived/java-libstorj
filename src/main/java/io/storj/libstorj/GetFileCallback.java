@@ -18,10 +18,12 @@ package io.storj.libstorj;
 
 /**
  * Callback interface for receiving the response from the <code>getFile()</code>
- * methods.
+ * and <code>getFiles()</code> methods.
  * 
  * @see Storj#getFile(Bucket, String, GetFileCallback)
  * @see Storj#getFile(String, String, GetFileCallback)
+ * @see Storj#getFiles(Bucket, String[], GetFileCallback)
+ * @see Storj#getFiles(String, String[], GetFileCallback)
  */
 public interface GetFileCallback {
 
@@ -36,11 +38,13 @@ public interface GetFileCallback {
     /**
      * Called if getting the file info finished with error.
      * 
+     * @param fileId
+     *            the file id this error applies to
      * @param code
      *            the error code
      * @param message
      *            the error message
      */
-    void onError(int code, String message);
+    void onError(String fileId, int code, String message);
 
 }

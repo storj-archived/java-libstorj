@@ -100,8 +100,8 @@ public class StorjTest {
             }
             
             @Override
-            public void onError(int code, String message) {
-                System.out.printf("[%d] %s\n", code, message);
+            public void onError(String bucketId, int code, String message) {
+                System.out.printf("[%d] %s: %s\n", code, message, bucketId);
                 latch.countDown();
             }
         });
@@ -115,14 +115,14 @@ public class StorjTest {
 
         storj.getBucketId("test", new GetBucketIdCallback() {
             @Override
-            public void onBucketIdReceived(String bucketId) {
-                System.out.println(bucketId);
+            public void onBucketIdReceived(String bucketName, String bucketId) {
+                System.out.printf("%s --> %s\n", bucketName, bucketId);
                 latch.countDown();
             }
 
             @Override
-            public void onError(int code, String message) {
-                System.out.printf("[%d] %s\n", code, message);
+            public void onError(String bucketName, int code, String message) {
+                System.out.printf("[%d] %s: %s\n", code, message, bucketName);
                 latch.countDown();
             }
         });
@@ -142,8 +142,8 @@ public class StorjTest {
             }
 
             @Override
-            public void onError(int code, String message) {
-                System.out.printf("[%d] %s\n", code, message);
+            public void onError(String bucketName, int code, String message) {
+                System.out.printf("[%d] %s: %s\n", code, message, bucketName);
                 latch.countDown();
             }
         });
@@ -157,14 +157,14 @@ public class StorjTest {
 
         storj.deleteBucket(bucket, new DeleteBucketCallback() {
             @Override
-            public void onBucketDeleted() {
-                System.out.println("Bucket deleted");
+            public void onBucketDeleted(String bucketId) {
+                System.out.printf("Bucket deleted: %s\n", bucketId);
                 latch.countDown();
             }
 
             @Override
-            public void onError(int code, String message) {
-                System.out.printf("[%d] %s\n", code, message);
+            public void onError(String bucketId, int code, String message) {
+                System.out.printf("[%d] %s: %s\n", code, message, bucketId);
                 latch.countDown();
             }
         });
@@ -178,14 +178,14 @@ public class StorjTest {
 
         storj.listFiles(bucket, new ListFilesCallback() {
             @Override
-            public void onFilesReceived(File[] files) {
+            public void onFilesReceived(String bucketId, File[] files) {
                 System.out.println(files);
                 latch.countDown();
             }
 
             @Override
-            public void onError(int code, String message) {
-                System.out.printf("[%d] %s\n", code, message);
+            public void onError(String bucketId, int code, String message) {
+                System.out.printf("[%d] %s: %s\n", code, message, bucketId);
                 latch.countDown();
             }
         });
@@ -205,8 +205,8 @@ public class StorjTest {
             }
 
             @Override
-            public void onError(int code, String message) {
-                System.out.printf("[%d] %s\n", code, message);
+            public void onError(String fileId, int code, String message) {
+                System.out.printf("[%d] %s: %s\n", code, message, fileId);
                 latch.countDown();
             }
         });
@@ -220,14 +220,14 @@ public class StorjTest {
 
         storj.getFileId(bucket, "file-name", new GetFileIdCallback() {
             @Override
-            public void onFileIdReceived(String fileId) {
-                System.out.println(fileId);
+            public void onFileIdReceived(String fileName, String fileId) {
+                System.out.printf("%s --> %s\n", fileName, fileId);
                 latch.countDown();
             }
 
             @Override
-            public void onError(int code, String message) {
-                System.out.printf("[%d] %s\n", code, message);
+            public void onError(String fileName, int code, String message) {
+                System.out.printf("[%d] %s: %s\n", code, message, fileName);
                 latch.countDown();
             }
         });
@@ -291,14 +291,14 @@ public class StorjTest {
 
         storj.deleteFile(bucket, file, new DeleteFileCallback() {
             @Override
-            public void onFileDeleted() {
-                System.out.println("File deleted");
+            public void onFileDeleted(String fileId) {
+                System.out.printf("File %s deleted\n", fileId);
                 latch.countDown();
             }
 
             @Override
-            public void onError(int code, String message) {
-                System.out.printf("[%d] %s\n", code, message);
+            public void onError(String fileId, int code, String message) {
+                System.out.printf("[%d] %s: %s\n", code, message, fileId);
                 latch.countDown();
             }
         });
