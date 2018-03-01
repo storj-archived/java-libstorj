@@ -226,7 +226,7 @@ Java_io_storj_libstorj_Storj__1runEventLoop(
         jlong storjEnv)
 {
     storj_env_t *storj_env = (storj_env_t *) storjEnv;
-    uv_run(storj_env->loop, UV_RUN_DEFAULT);
+    while (uv_run(storj_env->loop, UV_RUN_ONCE));
 }
 
 static void get_buckets_callback(uv_work_t *work_req, int status)
@@ -296,8 +296,6 @@ Java_io_storj_libstorj_Storj__1getBuckets(
     storj_bridge_get_buckets(storj_env,
                              env->NewGlobalRef(callbackObject),
                              get_buckets_callback);
-
-    uv_run(storj_env->loop, UV_RUN_DEFAULT);
 }
 
 static void get_bucket_callback(uv_work_t *work_req, int status)
@@ -359,8 +357,6 @@ Java_io_storj_libstorj_Storj__1getBucket(
                             env->NewGlobalRef(callbackObject),
                             get_bucket_callback);
 
-    uv_run(storj_env->loop, UV_RUN_DEFAULT);
-
     env->ReleaseStringUTFChars(bucketId, bucket_id);
 }
 
@@ -392,6 +388,7 @@ static void get_bucket_id_callback(uv_work_t *work_req, int status)
     }
 
     json_object_put(req->response);
+    free((char *)req->bucket_name);
     free(req);
     free(work_req);
 }
@@ -409,11 +406,9 @@ Java_io_storj_libstorj_Storj__1getBucketId(
     const char *bucket_name = env->GetStringUTFChars(bucketName, NULL);
 
     storj_bridge_get_bucket_id(storj_env,
-                               bucket_name,
+                               strdup(bucket_name),
                                env->NewGlobalRef(callbackObject),
                                get_bucket_id_callback);
-
-    uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
     env->ReleaseStringUTFChars(bucketName, bucket_name);
 }
@@ -457,6 +452,7 @@ static void create_bucket_callback(uv_work_t *work_req, int status)
     }
 
     json_object_put(req->response);
+    free((char *)req->bucket_name);
     free((char *)req->encrypted_bucket_name);
     free(req->bucket);
     free(req);
@@ -476,11 +472,9 @@ Java_io_storj_libstorj_Storj__1createBucket(
     const char *bucket_name = env->GetStringUTFChars(bucketName, NULL);
 
     storj_bridge_create_bucket(storj_env,
-                               bucket_name,
+                               strdup(bucket_name),
                                env->NewGlobalRef(callbackObject),
                                create_bucket_callback);
-
-    uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
     env->ReleaseStringUTFChars(bucketName, bucket_name);
 }
@@ -567,6 +561,7 @@ static void list_files_callback(uv_work_t *work_req, int status)
         }
     }
 
+    free((char *) req->bucket_id);
     storj_free_list_files_request(req);
     free(work_req);
 }
@@ -584,11 +579,9 @@ Java_io_storj_libstorj_Storj__1listFiles(
     const char *bucket_id = env->GetStringUTFChars(bucketId, NULL);
 
     storj_bridge_list_files(storj_env,
-                            bucket_id,
+                            strdup(bucket_id),
                             env->NewGlobalRef(callbackObject),
                             list_files_callback);
-
-    uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
 }
@@ -646,6 +639,7 @@ static void get_file_callback(uv_work_t *work_req, int status)
         }
     }
 
+    free((char *)req->bucket_id);
     storj_free_get_file_info_request(req);
     free(work_req);
 }
@@ -665,12 +659,10 @@ Java_io_storj_libstorj_Storj__1getFile(
     const char *file_id = env->GetStringUTFChars(fileId, NULL);
 
     storj_bridge_get_file_info(storj_env,
-                               bucket_id,
+                               strdup(bucket_id),
                                file_id,
                                env->NewGlobalRef(callbackObject),
                                get_file_callback);
-
-    uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
     env->ReleaseStringUTFChars(fileId, file_id);
@@ -704,6 +696,8 @@ static void get_file_id_callback(uv_work_t *work_req, int status)
     }
 
     json_object_put(req->response);
+    free((char *)req->bucket_id);
+    free((char *)req->file_name);
     free(req);
     free(work_req);
 }
@@ -723,12 +717,10 @@ Java_io_storj_libstorj_Storj__1getFileId(
     const char *file_name = env->GetStringUTFChars(fileName, NULL);
 
     storj_bridge_get_file_id(storj_env,
-                             bucket_id,
-                             file_name,
+                             strdup(bucket_id),
+                             strdup(file_name),
                              env->NewGlobalRef(callbackObject),
                              get_file_id_callback);
-
-    uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
     env->ReleaseStringUTFChars(fileName, file_name);
@@ -1071,8 +1063,6 @@ Java_io_storj_libstorj_Storj__1deleteBucket(
                                env->NewGlobalRef(callbackObject),
                                delete_bucket_callback);
 
-    uv_run(storj_env->loop, UV_RUN_DEFAULT);
-
     env->ReleaseStringUTFChars(bucketId, bucket_id);
 }
 
@@ -1123,8 +1113,6 @@ Java_io_storj_libstorj_Storj__1deleteFile(
                              file_id,
                              env->NewGlobalRef(callbackObject),
                              delete_file_callback);
-
-    uv_run(storj_env->loop, UV_RUN_DEFAULT);
 
     env->ReleaseStringUTFChars(bucketId, bucket_id);
     env->ReleaseStringUTFChars(fileId, file_id);
@@ -1179,8 +1167,6 @@ Java_io_storj_libstorj_Storj__1register(
                           storj_env->bridge_options->pass,
                           env->NewGlobalRef(callbackObject),
                           register_callback);
-
-    uv_run(storj_env->loop, UV_RUN_DEFAULT);
 }
 
 static void get_info_callback(uv_work_t *work_req, int status)
@@ -1240,8 +1226,6 @@ Java_io_storj_libstorj_Storj__1getInfo(
     storj_bridge_get_info(storj_env,
                           env->NewGlobalRef(callbackObject),
                           get_info_callback);
-
-    uv_run(storj_env->loop, UV_RUN_DEFAULT);
 }
 
 extern "C"

@@ -34,8 +34,9 @@ public class StorjTest {
     public void setup() throws MalformedURLException {
         storj = new Storj("http://localhost:6382")
                 .setDownloadDirectory(new java.io.File(System.getProperty("java.io.tmpdir")));
-        bucket = new Bucket("74b9ce6f3c25f772ccdaaf08", "test", null, true);
-        file = new File("file-id", "74b9ce6f3c25f772ccdaaf08", "file-name", null, true, 1, null, null, null, null);
+        bucket = new Bucket("cafff1293d0170285691c3e0", "Test", null, true);
+        file = new File("62788dce8ecc345b18f65437", bucket.getId(), "file-name", null, true, 1, null, null,
+                null, null);
     }
 
     @After
@@ -67,123 +68,171 @@ public class StorjTest {
     }
 
     @Test
-    public void testGetBuckets() {
+    public void testGetBuckets() throws InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+
         storj.getBuckets(new GetBucketsCallback() {
             @Override
             public void onBucketsReceived(Bucket[] buckets) {
                 System.out.println(buckets);
+                latch.countDown();
             }
             
             @Override
             public void onError(int code, String message) {
                 System.out.printf("[%d] %s\n", code, message);
+                latch.countDown();
             }
         });
+
+        latch.await();
     }
 
     @Test
-    public void testGetBucket() {
+    public void testGetBucket() throws InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+
         storj.getBucket("74b9ce6f3c25f772ccdaaf08", new GetBucketCallback() {
             @Override
             public void onBucketReceived(Bucket bucket) {
                 System.out.println(bucket);
+                latch.countDown();
             }
             
             @Override
             public void onError(int code, String message) {
                 System.out.printf("[%d] %s\n", code, message);
+                latch.countDown();
             }
         });
+
+        latch.await();
     }
 
     @Test
-    public void testGetBucketId() {
+    public void testGetBucketId() throws InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+
         storj.getBucketId("test", new GetBucketIdCallback() {
             @Override
             public void onBucketIdReceived(String bucketId) {
                 System.out.println(bucketId);
+                latch.countDown();
             }
 
             @Override
             public void onError(int code, String message) {
                 System.out.printf("[%d] %s\n", code, message);
+                latch.countDown();
             }
         });
+
+        latch.await();
     }
 
     @Test
-    public void testCreateBucket() {
+    public void testCreateBucket() throws InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+
         storj.createBucket("test", new CreateBucketCallback() {
             @Override
             public void onBucketCreated(Bucket bucket) {
                 System.out.println(bucket);
+                latch.countDown();
             }
 
             @Override
             public void onError(int code, String message) {
                 System.out.printf("[%d] %s\n", code, message);
+                latch.countDown();
             }
         });
+
+        latch.await();
     }
 
     @Test
-    public void testDeleteBucket() {
+    public void testDeleteBucket() throws InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+
         storj.deleteBucket(bucket, new DeleteBucketCallback() {
             @Override
             public void onBucketDeleted() {
                 System.out.println("Bucket deleted");
+                latch.countDown();
             }
 
             @Override
             public void onError(int code, String message) {
                 System.out.printf("[%d] %s\n", code, message);
+                latch.countDown();
             }
         });
+
+        latch.await();
     }
 
     @Test
-    public void testListFiles() {
+    public void testListFiles() throws InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+
         storj.listFiles(bucket, new ListFilesCallback() {
             @Override
             public void onFilesReceived(File[] files) {
                 System.out.println(files);
+                latch.countDown();
             }
 
             @Override
             public void onError(int code, String message) {
                 System.out.printf("[%d] %s\n", code, message);
+                latch.countDown();
             }
         });
+
+        latch.await();
     }
 
     @Test
-    public void testGetFile() {
+    public void testGetFile() throws InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+
         storj.getFile(bucket, file.getId(), new GetFileCallback() {
             @Override
             public void onFileReceived(File file) {
                 System.out.println(file);
+                latch.countDown();
             }
 
             @Override
             public void onError(int code, String message) {
                 System.out.printf("[%d] %s\n", code, message);
+                latch.countDown();
             }
         });
+
+        latch.await();
     }
 
     @Test
-    public void testGetFileId() {
+    public void testGetFileId() throws InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+
         storj.getFileId(bucket, "file-name", new GetFileIdCallback() {
             @Override
             public void onFileIdReceived(String fileId) {
                 System.out.println(fileId);
+                latch.countDown();
             }
 
             @Override
             public void onError(int code, String message) {
                 System.out.printf("[%d] %s\n", code, message);
+                latch.countDown();
             }
         });
+
+        latch.await();
     }
 
     @Test
@@ -237,18 +286,24 @@ public class StorjTest {
     }
 
     @Test
-    public void testDeleteFile() {
+    public void testDeleteFile() throws InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+
         storj.deleteFile(bucket, file, new DeleteFileCallback() {
             @Override
             public void onFileDeleted() {
                 System.out.println("File deleted");
+                latch.countDown();
             }
 
             @Override
             public void onError(int code, String message) {
                 System.out.printf("[%d] %s\n", code, message);
+                latch.countDown();
             }
         });
+
+        latch.await();
     }
 
     @Test

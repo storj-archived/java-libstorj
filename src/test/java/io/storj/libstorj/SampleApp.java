@@ -16,14 +16,19 @@
  */
 package io.storj.libstorj;
 
+import java.util.concurrent.CountDownLatch;
+
 public class SampleApp {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+
         Storj storj = new Storj();
         storj.getBuckets(new GetBucketsCallback() {
             @Override
             public void onError(int code, String message) {
                 System.out.printf("[%d] %s\n", code, message);
+                latch.countDown();
             }
 
             @Override
@@ -31,8 +36,13 @@ public class SampleApp {
                 for (Bucket bucket : buckets) {
                     System.out.printf("%s %s\n", bucket.getId(), bucket.getName());
                 }
+                latch.countDown();
             }
         });
+
+        latch.await();
+
+        storj.destroy();
     }
 
 }

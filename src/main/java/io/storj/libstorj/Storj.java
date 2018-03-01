@@ -21,7 +21,6 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Properties;
-import java.util.concurrent.CountDownLatch;
 
 /**
  * Java object wrapper of the libstorj native library.
@@ -640,6 +639,7 @@ public class Storj {
         long env = initEnv();
 
         _getInfo(env, callback);
+        _runEventLoop(env);
 
         destroyEnv(env);
     }
@@ -659,6 +659,7 @@ public class Storj {
         long env = initEnv(user, pass);
 
         _register(env, callback);
+        _runEventLoop(env);
 
         destroyEnv(env);
     }
@@ -749,26 +750,23 @@ public class Storj {
      */
     public int verifyKeys(String user, String pass) throws InterruptedException {
         long env = initEnv(user, pass);
-        final CountDownLatch latch = new CountDownLatch(1);
         final int[] result = { NO_ERROR };
 
         _getBuckets(env, new GetBucketsCallback() {
             @Override
             public void onBucketsReceived(Bucket[] buckets) {
                 // success
-                latch.countDown();
             }
 
             @Override
             public void onError(int code, String message) {
                 result[0] = code;
-                latch.countDown();
             }
         });
 
-        destroyEnv(env);
+        _runEventLoop(env);
 
-        latch.await();
+        destroyEnv(env);
 
         return result[0];
     }
@@ -802,7 +800,6 @@ public class Storj {
      */
     public int verifyKeys(Keys keys) throws InterruptedException {
         long env = initEnv(keys);
-        final CountDownLatch latch = new CountDownLatch(1);
         final int[] result = { NO_ERROR };
 
         _getBuckets(env, new GetBucketsCallback() {
@@ -825,20 +822,17 @@ public class Storj {
                 if (!validMnemonic) {
                     result[0] = STORJ_META_DECRYPTION_ERROR;
                 }
-
-                latch.countDown();
             }
 
             @Override
             public void onError(int code, String message) {
                 result[0] = code;
-                latch.countDown();
             }
         });
 
-        destroyEnv(env);
+        _runEventLoop(env);
 
-        latch.await();
+        destroyEnv(env);
 
         if (result[0] != STORJ_META_DECRYPTION_ERROR) {
             return result[0];
@@ -849,7 +843,6 @@ public class Storj {
         // seems that account was created on app.storj.io and all buckets were created
         // there. In this case accept the originally provided mnemonic as valid.
         env = initEnv(keys.getUser(), keys.getPass());
-        final CountDownLatch latch2 = new CountDownLatch(1);
         final int[] result2 = { NO_ERROR };
         
         _getBuckets(env, new GetBucketsCallback() {
@@ -867,20 +860,17 @@ public class Storj {
                 if (!validMnemonic) {
                     result2[0] = STORJ_META_DECRYPTION_ERROR;
                 }
-
-                latch2.countDown();
             }
 
             @Override
             public void onError(int code, String message) {
                 result2[0] = code;
-                latch2.countDown();
             }
         });
 
-        destroyEnv(env);
+        _runEventLoop(env);
 
-        latch2.await();
+        destroyEnv(env);
 
         return result2[0];
     }
@@ -1185,18 +1175,7 @@ public class Storj {
     public long downloadFile(String bucketId, String fileId, String localPath, DownloadFileCallback callback)
             throws KeysNotFoundException {
         checkEnv();
-
-        long state = _downloadFile(env, bucketId, fileId, localPath, callback);
-
-        if (state != 0) {
-            new Thread() {
-                public void run() {
-                    _runEventLoop(env);
-                }
-            }.start();
-        }
-
-        return state;
+        return _downloadFile(env, bucketId, fileId, localPath, callback);
     }
 
     /**
@@ -1319,18 +1298,7 @@ public class Storj {
     public long uploadFile(String bucketId, String fileName, String localPath, UploadFileCallback callback)
             throws KeysNotFoundException {
         checkEnv();
-
-        long state = _uploadFile(env, bucketId, fileName, localPath, callback);
-
-        if (state != 0) {
-            new Thread() {
-                public void run() {
-                    _runEventLoop(env);
-                }
-            }.start();
-        }
-
-        return state;
+        return _uploadFile(env, bucketId, fileName, localPath, callback);
     }
 
     /**
@@ -1375,6 +1343,7 @@ public class Storj {
         checkKeys();
         if (env == 0) {
             env = initEnv(keys);
+            new EventLoopRunner().start();
         }
     }
 
@@ -1404,10 +1373,13 @@ public class Storj {
     }
 
     /**
-     * Releases the native resources allocated by the native library.
+     * Stops the event loop thread and releases the native resources allocated by
+     * the native library.
      */
     public void destroy() {
-        destroyEnv(env);
+        long _env = env;
+        env = 0;
+        destroyEnv(_env);
     }
 
     @Override
@@ -1459,5 +1431,23 @@ public class Storj {
             UploadFileCallback callback);
 
     private native boolean _cancelUpload(long uploadState);
+
+
+    private class EventLoopRunner extends Thread {
+
+        @Override
+        public void run() {
+            while (env != 0) {
+                _runEventLoop(env);
+
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    return;
+                }
+            }
+        }
+
+    }
 
 }
