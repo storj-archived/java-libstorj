@@ -70,6 +70,28 @@ model {
         }
     }
     toolChains {
+        clang(Clang){
+            eachPlatform {
+                cppCompiler.withArguments { args ->
+                    args << "-c"
+                    args << "-Wall"
+                    args << "-fPIC"
+                    args << "-v"
+                    args << "-I${javaHome}/include"
+                    args << "-I${javaHome}/include/darwin"
+                }
+                linker.withArguments { args ->
+                    args << "-fPIC"
+                    args << "-shared"
+                    args << "-lstorj"
+                    args << "-lcurl"
+                    args << "-ljson-c"
+                    args << "-lnettle"
+                    args << "-luv"
+                    args << "-v"
+                }
+            }
+        }
         gcc(Gcc) {
             eachPlatform {
                 cppCompiler.withArguments { args ->
@@ -105,7 +127,7 @@ def pomConfig = {
             organizationUrl "https://storj.io"
         }
     }
-    
+
     scm {
         connection "scm:git:git://github.com/Storj/java-libstorj.git"
         developerConnection "scm:git:ssh://github.com:Storj/java-libstorj.git"
