@@ -16,8 +16,11 @@
  */
 package io.storj.libstorj;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.Files;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -85,7 +88,7 @@ public class StorjTest {
             }
         });
 
-        latch.await();
+        await(latch);
     }
 
     @Test
@@ -106,7 +109,7 @@ public class StorjTest {
             }
         });
 
-        latch.await();
+        await(latch);
     }
 
     @Test
@@ -127,7 +130,7 @@ public class StorjTest {
             }
         });
 
-        latch.await();
+        await(latch);
     }
 
     @Test
@@ -148,7 +151,7 @@ public class StorjTest {
             }
         });
 
-        latch.await();
+        await(latch);
     }
 
     @Test
@@ -169,7 +172,7 @@ public class StorjTest {
             }
         });
 
-        latch.await();
+        await(latch);
     }
 
     @Test
@@ -190,7 +193,7 @@ public class StorjTest {
             }
         });
 
-        latch.await();
+        await(latch);
     }
 
     @Test
@@ -211,7 +214,7 @@ public class StorjTest {
             }
         });
 
-        latch.await();
+        await(latch);
     }
 
     @Test
@@ -232,7 +235,7 @@ public class StorjTest {
             }
         });
 
-        latch.await();
+        await(latch);
     }
 
     @Test
@@ -257,7 +260,7 @@ public class StorjTest {
             }
         });
 
-        latch.await();
+        await(latch);
     }
 
     @Test
@@ -282,7 +285,7 @@ public class StorjTest {
             }
         });
 
-        latch.await();
+        await(latch);
     }
 
     @Test
@@ -303,7 +306,7 @@ public class StorjTest {
             }
         });
 
-        latch.await();
+        await(latch);
     }
 
     @Test
@@ -314,6 +317,13 @@ public class StorjTest {
     @Test
     public void testVerifyKeys() throws InterruptedException {
         storj.verifyKeys(new Keys("myuser", "mypass", "mymnemonic"));
+    }
+
+    @Test
+    public void testImportKeysFirst() throws InterruptedException, IOException {
+        storj.setConfigDirectory(Files.createTempDirectory(null).toFile());
+        storj.importKeys(new Keys("some-user", "some-pass", "some mnemonic"), "");
+        testGetBuckets();
     }
 
     @Test
@@ -427,6 +437,12 @@ public class StorjTest {
         Assert.assertEquals("Permission denied",
                 Storj.getErrorMessage(Storj.EACCES));
 
+    }
+
+    private void await(CountDownLatch latch) throws InterruptedException {
+        if (!latch.await(10, TimeUnit.SECONDS)) {
+            Assert.fail("Deadlock");
+        }
     }
 
 }

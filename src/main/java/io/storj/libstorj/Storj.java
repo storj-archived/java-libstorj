@@ -398,6 +398,8 @@ public class Storj {
     private java.io.File configDir;
     private java.io.File downloadDir;
 
+    private EventLoopRunner looper;
+
     /**
      * Pointer to the address of the storj_env_t struct in the native library.
      */
@@ -678,11 +680,16 @@ public class Storj {
      * Returns the user's keys that have been imported by decrypting the
      * authentication file with the provided passphrase.
      * 
+     * <p>
+     * The authentication file is located in the configuration directory.
+     * </p>
+     * 
      * @param passphrase
      *            the passphrase to decrypt the keys, can be an empty String, but
      *            not <code>null</code>
      * @return a {@code Key} object with the user's keys, or <code>null</code> if
      *         the keys have not been imported yet.
+     * @see #setConfigDirectory(java.io.File)
      */
     public Keys getKeys(String passphrase) {
         if (keys == null) {
@@ -692,8 +699,12 @@ public class Storj {
     }
 
     /**
-     * Import the provided keys and encrypt them with the provided passphrase in an
+     * Imports the provided keys and encrypt them with the provided passphrase in an
      * authentication file.
+     * 
+     * <p>
+     * The authentication file is located in the configuration directory.
+     * </p>
      * 
      * @param keys
      *            a {@link Keys} object with the user's keys
@@ -702,6 +713,7 @@ public class Storj {
      *            not <code>null</code>
      * @return <code>true</code> if importing keys was successful,
      *         <code>false</code> otherwise
+     * @see #setConfigDirectory(java.io.File)
      */
     public boolean importKeys(Keys keys, String passphrase) {
         boolean success = _writeAuthFile(getAuthFile().toString(), keys.getUser(), keys.getPass(), keys.getMnemonic(),
@@ -711,6 +723,8 @@ public class Storj {
             // re-init Storj env
             destroyEnv(env);
             env = initEnv(keys);
+            // start the event loop runner if not running yet
+            startLooper();
         }
         return success;
     }
@@ -718,8 +732,13 @@ public class Storj {
     /**
      * Deletes the authentication file with user's keys and clear them from memory.
      * 
+     * <p>
+     * The authentication file is located in the configuration directory.
+     * </p>
+     * 
      * @return <code>true</code> if deleting the authentication file was successful,
      *         <code>false</code> otherwise
+     * @see #setConfigDirectory(java.io.File)
      */
     public boolean deleteKeys() {
         boolean success = getAuthFile().delete();
@@ -1929,7 +1948,7 @@ public class Storj {
         checkKeys();
         if (env == 0) {
             env = initEnv(keys);
-            new EventLoopRunner().start();
+            startLooper();
         }
     }
 
@@ -1955,6 +1974,13 @@ public class Storj {
     private void destroyEnv(long env) {
         if (env != 0) {
             _destroyEnv(env);
+        }
+    }
+
+    private void startLooper() {
+        if (looper == null) {
+            looper = new EventLoopRunner();
+            looper.start();
         }
     }
 
