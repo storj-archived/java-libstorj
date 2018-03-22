@@ -1,4 +1,5 @@
 import org.apache.tools.ant.filters.*
+import org.gradle.internal.os.OperatingSystem
 
 plugins {
     id "com.jfrog.bintray" version "1.7.3"
@@ -70,7 +71,7 @@ model {
         }
     }
     toolChains {
-        clang(Clang){
+        clang(Clang) {
             eachPlatform {
                 cppCompiler.withArguments { args ->
                     args << "-c"
@@ -78,7 +79,6 @@ model {
                     args << "-fPIC"
                     args << "-v"
                     args << "-I${javaHome}/include"
-                    args << "-I${javaHome}/include/darwin"
                 }
                 linker.withArguments { args ->
                     args << "-fPIC"
@@ -90,21 +90,15 @@ model {
                     args << "-luv"
                     args << "-v"
                 }
-            }
-        }
-        gcc(Gcc) {
-            eachPlatform {
-                cppCompiler.withArguments { args ->
-                    args << "-c"
-                    args << "-Wall"
-                    args << "-fPIC"
-                    args << "-I${javaHome}/include"
-                    args << "-I${javaHome}/include/linux"
+                if (OperatingSystem.current().isLinux()) {
+                    cppCompiler.withArguments { args ->
+                        args << "-I${javaHome}/include/linux"
+                    }
                 }
-                linker.withArguments { args ->
-                    args << "-fPIC"
-                    args << "-shared"
-                    args << "-lstorj"
+                if (OperatingSystem.current().isMacOsX()) {
+                    cppCompiler.withArguments { args ->
+                        args << "-I${javaHome}/include/darwin"
+                    }
                 }
             }
         }
