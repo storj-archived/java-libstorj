@@ -52,7 +52,8 @@ before_deploy:
 deploy:
   provider: releases
   skip_cleanup: true
-  api_key: GITHUB_TOKEN
+  api_key:
+    secure: BFNGvCiVL/G9yAM5b7rqlicCttonF2E84jNVG4SIfNj08DgeIP0w/v8XTwHvCP9/Frt0+1X9GM3BY1VmBLxe7I5lLOd2E7fz28p+DAZL35yLqrEYTbzwb6/mFxVyOnUM3vjIbH0/Jnf5uCXwzG8gYvhZQBDG2GMmx6C/BqDfEB3yFCG3GKwVi9BhzR7kL123pfa+ZwC2n0zh7Rmslu2uwhxJ+jxSAUofO9VWyBhSmxIc6JxJV1hxQPnwzZh4zTh5kmzVhjh8YCPABeNueL1Kzo6G+4Yp8K6FnxltsbzBruqk9kFxKes/9xwDT6Ym6HNRf+Zy0fE/s1mKiJ1N8+HamvFE8v7mUCuIn3wPNcpP2ytg0kB0auPRHcxaQwth3So9ys+yKv4P1Mg/DeyxkIiS2M02wj4lQqENsIOfNchDP/qMMQ06ePjBh5bLqy91Rcu7SQAx/uMxVMdTyv5cJAAueV0fMyrjt+feCnZvwK9/jA2xktFcyKeBLYaeaS5sX8kZjK2i1KBsDLTPlPd+R5B+xyja/FKJy8OkEGhSYWPhB6vgRRmoyvy+qTwqnegvwp8xc86dHKAZmzofE5u4Eq+suklOi0F3ejCUT/a7rzlgNVxg4+GcWeSYtDjLnp8ITo3QsACTW7SzbvZ5yIealdJMro+LWCYb7HLhkOBjYy1Gymo=
   file:
   - build/libs/jni/shared/java-libstorj-$TRAVIS_TAG-macos-dylibs.tar.gz
   on:
