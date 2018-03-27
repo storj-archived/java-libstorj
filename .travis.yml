@@ -29,14 +29,14 @@ before_install:
 
 install:
 - git clone https://github.com/Storj/libstorj.git
-- cd libstorj && ./autogen.sh && ./configure && make && sudo make install && cd ..
+- cd libstorj && ./autogen.sh && CFLAGS="-g -std=gnu99" ./configure && make && sudo make install && cd ..
 
 script:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     jdk_switcher use oraclejdk8;
   fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-    JAVA_HOME=$(/usr/libexec/java_home);
+    export JAVA_HOME=$(/usr/libexec/java_home);
   fi
 - ./gradlew build
 
