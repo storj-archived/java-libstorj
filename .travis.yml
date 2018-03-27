@@ -20,7 +20,7 @@ env:
 before_install:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     sudo apt-get install build-essential libtool autotools-dev automake libmicrohttpd-dev bsdmainutils;
-    sudo apt-get install libcurl4-gnutls-dev nettle-dev libjson-c-dev libuv1-dev;
+    sudo apt-get install libcurl4-gnutls-dev nettle-dev libjson-c-dev libuv-dev;
   fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
     brew install -v libtool automake libmicrohttpd pkgconfig;
