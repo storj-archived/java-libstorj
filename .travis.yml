@@ -9,13 +9,9 @@ osx_image: xcode9.2
 
 sudo: true
 
-jdk: oraclejdk8
-
 env:
   global:
   - LD_LIBRARY_PATH=/usr/local/lib
-#  - JAVA_HOME=$(/usr/libexec/java_home)
-  - LIBSTORJ_VERSION=2.0.0-beta2
 
 before_install:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
@@ -32,11 +28,16 @@ before_install:
   fi
 
 install:
-- curl -sSL https://github.com/Storj/libstorj/archive/v$LIBSTORJ_VERSION.tar.gz | tar -zxv
-- (cd libstorj-$LIBSTORJ_VERSION && ./autogen.sh && CC=clang CFLAGS="-g -O2 -O3 -std=gnu99" ./configure && make && sudo make install)
+- git clone https://github.com/Storj/libstorj.git
+- cd libstorj-$LIBSTORJ_VERSION && ./autogen.sh && CC=clang CFLAGS="-g -O2 -O3 -std=gnu99" ./configure && make && sudo make install
 
 script:
-- LD_LIBRARY_PATH=$(pwd)/libstorj-$LIBSTORJ_VERSION/lib:/usr/local/lib:/usr/local/opt/curl/lib INCLIDE=$(pwd)/libstorj-$LIBSTORJ_VERSION/include ./gradlew jniSharedLibrary --info
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    jdk_switcher use oraclejdk8;
+  fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    JAVA_HOME=$(/usr/libexec/java_home);
+  fi
 - ./gradlew build
 
 before_cache:
