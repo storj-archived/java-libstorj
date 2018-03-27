@@ -17,12 +17,12 @@ env:
 
 before_install:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-    apt-get install build-essential libtool autotools-dev automake libmicrohttpd-dev bsdmainutils
-    apt-get install libcurl4-gnutls-dev nettle-dev libjson-c-dev libuv1-dev
+    apt-get install build-essential libtool autotools-dev automake libmicrohttpd-dev bsdmainutils;
+    apt-get install libcurl4-gnutls-dev nettle-dev libjson-c-dev libuv1-dev;
   fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-    brew install -v libtool automake libmicrohttpd pkgconfig
-    brew install -v curl nettle json-c libuv
+    brew install -v libtool automake libmicrohttpd pkgconfig;
+    brew install -v curl nettle json-c libuv;
   fi
 
 install:
