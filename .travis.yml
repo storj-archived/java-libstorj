@@ -29,7 +29,7 @@ before_install:
 
 install:
 - git clone https://github.com/Storj/libstorj.git
-- cd libstorj && ./autogen.sh && CC=clang CFLAGS="-g -O2 -O3 -std=gnu99" ./configure && make && sudo make install
+- cd libstorj && ./autogen.sh && CC=clang CFLAGS="-g -O2 -O3 -std=gnu99" ./configure && make && sudo make install && cd ..
 
 script:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
