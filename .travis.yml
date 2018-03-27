@@ -9,7 +9,7 @@ osx_image: xcode9.2
 
 sudo: true
 
-jdk: openjdk7
+jdk: oraclejdk8
 
 env:
   global:
