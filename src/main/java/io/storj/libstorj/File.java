@@ -18,6 +18,7 @@ package io.storj.libstorj;
 
 import java.io.Serializable;
 import java.net.URLConnection;
+import java.nio.file.Paths;
 import java.util.Objects;
 
 /**
@@ -111,6 +112,10 @@ public class File implements Serializable, Comparable<File> {
      */
     public String getName() {
         return name;
+    }
+
+    public String getFileName() {
+        return Paths.get(name).getFileName().toString();
     }
 
     /**
