@@ -18,12 +18,17 @@ package io.storj.libstorj;
 
 import java.util.concurrent.CountDownLatch;
 
+import io.storj.libstorj.fs.Dir;
+import io.storj.libstorj.fs.ListCallback;
+import io.storj.libstorj.fs.StorjFS;
+
 public class FileTreeExample {
 
-    private static Storj storj;
+    private static StorjFS fs;
 
     public static void main(String[] args) throws InterruptedException {
-        storj = new Storj();
+        Storj storj = new Storj();
+        fs = new StorjFS(storj);
 
         printFileTree();
 
@@ -31,41 +36,31 @@ public class FileTreeExample {
     }
 
     private static void printFileTree() throws InterruptedException {
-        Bucket[] buckets = getBuckets();
-        for (Bucket bucket : buckets) {
-            System.out.println(bucket.getName());
-            printFileTree(bucket);
-        }
+        printFileTree(null, 0);
     }
 
-    private static void printFileTree(Bucket bucket) throws InterruptedException {
-        File[] files = getChildren(bucket);
-        for (File f : files) {
-            System.out.println("  " + f.getFileName());
-            if (f.isDirectory()) {
-                printFileTree(f, 2);
+    private static void printFileTree(Dir dir, int indent) throws InterruptedException {
+        Entry[] entries = list(dir);
+        for (Entry entry : entries) {
+            printEntry(entry, indent);
+            if (entry instanceof Dir) {
+                printFileTree((Dir) entry, indent + 1);
             }
         }
     }
 
-    private static void printFileTree(File file, int indent) throws InterruptedException {
-        File[] files = getChildren(file);
-        for (File f : files) {
-            for (int i = 0; i < indent; i++) {
-                System.out.print("  ");
-            }
-            System.out.println(f.getFileName());
-            if (f.isDirectory()) {
-                printFileTree(f, indent + 1);
-            }
+    private static void printEntry(Entry entry, int indent) {
+        for (int i = 0; i < indent; i++) {
+            System.out.print("  ");
         }
+        System.out.println(entry.getSimpleName());
     }
 
-    private static Bucket[] getBuckets() throws InterruptedException {
-        final Bucket[][] result = new Bucket[1][];
+    private static Entry[] list(Dir dir) throws InterruptedException {
+        final Entry[][] result = new Entry[1][];
         
         final CountDownLatch latch = new CountDownLatch(1);
-        storj.getBuckets(new GetBucketsCallback() {
+        fs.list(dir, new ListCallback() {
             @Override
             public void onError(int code, String message) {
                 System.out.printf("[%d] %s\n", code, message);
@@ -73,54 +68,8 @@ public class FileTreeExample {
             }
 
             @Override
-            public void onBucketsReceived(Bucket[] buckets) {
-                result[0] = buckets;
-                latch.countDown();
-            }
-        });
-
-        latch.await();
-
-        return result[0];
-    }
-
-    private static File[] getChildren(Bucket bucket) throws InterruptedException {
-        final File[][] result = new File[1][];
-
-        final CountDownLatch latch = new CountDownLatch(1);
-        storj.getChildren(bucket, new ListFilesCallback() {
-            @Override
-            public void onError(String bucketId, int code, String message) {
-                System.out.printf("[%d] %s\n", code, message);
-                latch.countDown();
-            }
-
-            @Override
-            public void onFilesReceived(String bucketId, File[] files) {
-                result[0] = files;
-                latch.countDown();
-            }
-        });
-
-        latch.await();
-
-        return result[0];
-    }
-
-    private static File[] getChildren(File file) throws InterruptedException {
-        final File[][] result = new File[1][];
-
-        final CountDownLatch latch = new CountDownLatch(1);
-        storj.getChildren(file, new ListFilesCallback() {
-            @Override
-            public void onError(String bucketId, int code, String message) {
-                System.out.printf("[%d] %s\n", code, message);
-                latch.countDown();
-            }
-
-            @Override
-            public void onFilesReceived(String bucketId, File[] files) {
-                result[0] = files;
+            public void onEntriesReceived(Entry[] entries) {
+                result[0] = entries;
                 latch.countDown();
             }
         });

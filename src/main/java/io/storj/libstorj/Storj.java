@@ -20,10 +20,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 
 /**
@@ -1194,48 +1190,6 @@ public class Storj {
         for (String bucketId : bucketIds) {
             _listFiles(env, bucketId, callback);
         }
-    }
-
-    public void getChildren(final Bucket bucket, final ListFilesCallback callback) {
-        listFiles(bucket, new ListFilesCallback() {
-            @Override
-            public void onFilesReceived(String bucketId, File[] files) {
-                List<File> children = new ArrayList<File>();
-                for (File f : files) {
-                    if (Paths.get(f.getName()).getNameCount() == 1) {
-                        children.add(f);
-                    }
-                }
-                callback.onFilesReceived(bucket.getId(), children.toArray(new File[children.size()]));
-            }
-
-            @Override
-            public void onError(String bucketId, int code, String message) {
-                callback.onError(bucketId, code, message);
-            }
-        });
-    }
-
-    public void getChildren(final File file, final ListFilesCallback callback) {
-        listFiles(file.getBucketId(), new ListFilesCallback() {
-            @Override
-            public void onFilesReceived(String bucketId, File[] files) {
-                List<File> children = new ArrayList<File>();
-                Path path = Paths.get(file.getName());
-                for (File f : files) {
-                    Path p = Paths.get(f.getName());
-                    if (p.startsWith(path) && p.getNameCount() == path.getNameCount() + 1) {
-                        children.add(f);
-                    }
-                }
-                callback.onFilesReceived(bucketId, children.toArray(new File[children.size()]));
-            }
-
-            @Override
-            public void onError(String bucketId, int code, String message) {
-                callback.onError(bucketId, code, message);
-            }
-        });
     }
 
     /**

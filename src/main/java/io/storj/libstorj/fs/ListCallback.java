@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Kaloyan Raev
+ * Copyright (C) 2018 Kaloyan Raev
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -14,16 +14,14 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.storj.libstorj;
+package io.storj.libstorj.fs;
 
-/**
- * A class representing a bucket in the Storj Bridge.
- */
-@SuppressWarnings("serial")
-public class Bucket extends Entry {
+import io.storj.libstorj.Entry;
 
-    public Bucket(String id, String name, String created, boolean decrypted) {
-        super(id, name, created, decrypted);
-    }
+public interface ListCallback {
+
+    void onEntriesReceived(Entry[] entries);
+
+    void onError(int code, String message);
 
 }

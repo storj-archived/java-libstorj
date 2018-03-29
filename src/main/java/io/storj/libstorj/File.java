@@ -16,22 +16,16 @@
  */
 package io.storj.libstorj;
 
-import java.io.Serializable;
 import java.net.URLConnection;
-import java.nio.file.Paths;
 import java.util.Objects;
 
 /**
  * A class representing a file in the Storj Bridge.
  */
 @SuppressWarnings("serial")
-public class File implements Serializable, Comparable<File> {
+public class File extends Entry {
 
-    private String id;
     private String bucketId;
-    private String name;
-    private String created;
-    private boolean decrypted;
     private long size;
     private String mimeType;
     private String erasure;
@@ -72,25 +66,13 @@ public class File implements Serializable, Comparable<File> {
                 String erasure,
                 String index,
                 String hmac) {
-        this.id = id;
+        super(id, name, created, decrypted);
         this.bucketId = bucketId;
-        this.name = name;
-        this.created = created;
-        this.decrypted = decrypted;
         this.size = size;
         this.mimeType = mimeType;
         this.erasure = erasure;
         this.index = index;
         this.hmac = hmac;
-    }
-
-    /**
-     * Returns the file id.
-     * 
-     * @return the file id
-     */
-    public String getId() {
-        return id;
     }
 
     /**
@@ -100,61 +82,6 @@ public class File implements Serializable, Comparable<File> {
      */
     public String getBucketId() {
         return bucketId;
-    }
-
-    /**
-     * Returns the file name. Check {@link #isDecrypted()} to see if the name has
-     * been decrypted successfully.
-     * 
-     * @return the file name
-     * 
-     * @see #isDecrypted()
-     */
-    public String getName() {
-        return name;
-    }
-
-    public String getFileName() {
-        return Paths.get(name).getFileName().toString();
-    }
-
-    /**
-     * Returns the time when the file was uploaded to the Storj network.
-     * 
-     * <p>
-     * The returned value is a UTC time in the format of
-     * "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", e.g. "2016-03-04T17:01:02.629Z".
-     * </p>
-     * 
-     * @return the formatted UTC time when the file was uploaded
-     */
-    public String getCreated() {
-        return created;
-    }
-
-    /**
-     * Checks if the file name has been decrypted successfully with the
-     * {@link Storj#importKeys(Keys, String) imported keys}.
-     * 
-     * <p>
-     * If the file name has been decrypted successfully then {@link #getName()} will
-     * return the decrypted file name. Otherwise {@link #getName()} will return the
-     * encrypted file name - the way it is stored in the Storj Bridge.
-     * </p>
-     * 
-     * <p>
-     * The return value also indicates if the file will be decrypted successully if
-     * later downloaded using the same keys.
-     * </p>
-     * 
-     * @return <code>true</code> if the file name has been decrypted successfully,
-     *         <code>false</code> otherwise
-     * 
-     * @see #getName()
-     * @see Storj#importKeys(Keys, String)
-     */
-    public boolean isDecrypted() {
-        return decrypted;
     }
 
     /**
@@ -261,11 +188,4 @@ public class File implements Serializable, Comparable<File> {
         return Objects.equals(id, file.id);
     }
 
-    /**
-     * Two File objects are compared to each other by their file names.
-     */
-    @Override
-    public int compareTo(File other) {
-        return name.compareTo(other.name);
-    }
 }
