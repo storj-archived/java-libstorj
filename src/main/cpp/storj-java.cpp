@@ -866,7 +866,8 @@ Java_io_storj_libstorj_Storj__1downloadFile(
         if (!state) {
             error_callback_download(env, h, STORJ_MEMORY_ERROR, storj_strerror(STORJ_MEMORY_ERROR));
         } else if (state->error_status) {
-            error_callback_download(env, h, state->error_status, storj_strerror(state->error_status));
+            // The error will be reported in the complete callback.
+            // Don't call the error callback here to avoid double free of memory.
         }
     }
 
@@ -1028,7 +1029,8 @@ Java_io_storj_libstorj_Storj__1uploadFile(
         if (!state) {
             error_callback_upload(env, h, STORJ_MEMORY_ERROR, storj_strerror(STORJ_MEMORY_ERROR));
         } else if (state->error_status) {
-            error_callback_upload(env, h, state->error_status, storj_strerror(state->error_status));
+            // The error will be reported in the complete callback.
+            // Don't call the error callback here to avoid double free of memory.
         }
     }
 
