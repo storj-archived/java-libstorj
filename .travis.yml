@@ -38,7 +38,7 @@ script:
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
     export JAVA_HOME=$(/usr/libexec/java_home);
   fi
-- ./gradlew build
+- ./gradlew build --info
 
 before_cache:
 - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
