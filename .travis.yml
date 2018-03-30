@@ -1,30 +1,55 @@
-osx_image: xcode9.2
-dist: trusty
 language: java
-sudo: true
+
 os:
+- linux
 - osx
+
+dist: trusty
+osx_image: xcode9.2
+
+sudo: true
+
 env:
   global:
   - LD_LIBRARY_PATH=/usr/local/lib
-  - JAVA_HOME=$(/usr/libexec/java_home)
-  - LIBSTORJ_VERSION=2.0.0-beta2
+
+before_install:
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    sudo apt-get install build-essential libtool autotools-dev automake libmicrohttpd-dev bsdmainutils;
+    sudo apt-get install libcurl4-gnutls-dev libjson-c-dev;
+    curl -sSL https://ftp.gnu.org/gnu/nettle/nettle-3.2.tar.gz | tar -zxv;
+    cd nettle-3.2 && autoconf && ./configure && make && sudo make install && cd ..;
+    curl -sSL https://github.com/libuv/libuv/archive/v1.8.0.tar.gz | tar -zxv;
+    cd libuv-1.8.0 && ./autogen.sh && ./configure && make && sudo make install && cd ..;
+  fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    brew install -v libtool automake libmicrohttpd pkgconfig;
+    brew install -v curl nettle json-c libuv;
+  fi
+
 install:
-- brew install -v curl libuv libmicrohttpd
-- curl -sSL https://github.com/Storj/libstorj/archive/v$LIBSTORJ_VERSION.tar.gz | tar -zxv
-- (cd libstorj-$LIBSTORJ_VERSION && ./autogen.sh && CC=clang CFLAGS="-g -O2 -O3 -std=gnu99" ./configure && make && sudo make install)
+- git clone https://github.com/Storj/libstorj.git
+- cd libstorj && ./autogen.sh && CFLAGS="-std=gnu11" ./configure && make && sudo make install && cd ..
+
 script:
-- LD_LIBRARY_PATH=$(pwd)/libstorj-$LIBSTORJ_VERSION/lib:/usr/local/lib:/usr/local/opt/curl/lib INCLIDE=$(pwd)/libstorj-$LIBSTORJ_VERSION/include ./gradlew jniSharedLibrary --info
-- ./gradlew assemble
-# - ./gradlew test --debug
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    jdk_switcher use oraclejdk8;
+  fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    export JAVA_HOME=$(/usr/libexec/java_home);
+  fi
+- ./gradlew build --info
+
 before_cache:
 - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
 - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
 cache:
   directories:
   - "$HOME/.gradle/caches/"
   - "$HOME/.gradle/wrapper/"
   - "$HOME/Library/Caches/Homebrew"
+
 before_deploy:
 - cd build/libs/jni/shared/
 - cp /usr/local/lib/libstorj.2.dylib .
@@ -49,6 +74,7 @@ before_deploy:
 - install_name_tool -change /usr/local/opt/libuv/lib/libuv.1.dylib libuv.1.dylib libstorj.2.dylib
 - tar -zcf java-libstorj-$TRAVIS_TAG-macos-dylibs.tar.gz *.dylib
 - cd ../../../../
+
 deploy:
   provider: releases
   skip_cleanup: true
