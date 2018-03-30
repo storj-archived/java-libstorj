@@ -1,6 +1,7 @@
 # java-libstorj
 
 [![Storj.io](https://storj.io/img/storj-badge.svg)](https://storj.io)
+[![Build Status](https://travis-ci.org/Storj/java-libstorj.svg?branch=master)](https://travis-ci.org/Storj/java-libstorj)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.storj/libstorj-java/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.storj/libstorj-java)
 [![Javadocs](http://javadoc.io/badge/io.storj/libstorj-java.svg)](http://javadoc.io/doc/io.storj/libstorj-java)
 
