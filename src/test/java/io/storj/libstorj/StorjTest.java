@@ -22,28 +22,34 @@ import java.nio.file.Files;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class StorjTest {
 
-    private Storj storj;
-    private Bucket bucket;
-    private File file;
+    private static Storj storj;
+    private static Bucket bucket;
+    private static File file;
 
-    @Before
-    public void setup() throws MalformedURLException {
+    @BeforeClass
+    public static void setup() throws MalformedURLException {
+        java.io.File tempDir = new java.io.File(System.getProperty("java.io.tmpdir"));
+
         storj = new Storj("http://localhost:6382")
-                .setDownloadDirectory(new java.io.File(System.getProperty("java.io.tmpdir")));
+                .setConfigDirectory(new java.io.File(tempDir, ".storj"))
+                .setDownloadDirectory(tempDir);
+        storj.importKeys(new Keys("user@mail.com", "secret", "mnemonic"), "");
+
         bucket = new Bucket("cafff1293d0170285691c3e0", "Test", null, true);
         file = new File("62788dce8ecc345b18f65437", bucket.getId(), "file-name", null, true, 1, null, null,
                 null, null);
     }
 
-    @After
-    public void cleanUp() {
+    @AfterClass
+    public static void cleanUp() {
+        storj.deleteKeys();
         storj.destroy();
     }
 
