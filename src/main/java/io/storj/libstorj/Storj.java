@@ -533,6 +533,14 @@ public class Storj {
      */
     public Storj setConfigDirectory(java.io.File dir) {
         configDir = dir;
+        
+        if (!configDir.exists()) {
+            boolean success = configDir.mkdirs();
+            if (!success) {
+                throw new IllegalStateException("config dir does not exists and could not create it");
+            }
+        }
+            
         return this;
     }
 
