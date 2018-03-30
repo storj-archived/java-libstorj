@@ -19,8 +19,8 @@ before_install:
     sudo apt-get install libcurl4-gnutls-dev libjson-c-dev;
     curl -sSL https://ftp.gnu.org/gnu/nettle/nettle-3.2.tar.gz | tar -zxv;
     cd nettle-3.2 && autoconf && ./configure && make && sudo make install && cd ..;
-    curl -sSL https://github.com/libuv/libuv/archive/v1.18.0.tar.gz | tar -zxv;
-    cd libuv-1.18.0 && ./autogen.sh && ./configure && make && sudo make install && cd ..;
+    curl -sSL https://github.com/libuv/libuv/archive/v1.8.0.tar.gz | tar -zxv;
+    cd libuv-1.8.0 && ./autogen.sh && ./configure && make && sudo make install && cd ..;
   fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
     brew install -v libtool automake libmicrohttpd pkgconfig;
