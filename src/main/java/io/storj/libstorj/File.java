@@ -18,6 +18,8 @@ package io.storj.libstorj;
 
 import java.io.Serializable;
 import java.net.URLConnection;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 /**
@@ -175,12 +177,21 @@ public class File implements Serializable, Comparable<File> {
      * @return a guess of the content type based on the file name
      */
     public String getMimeType() {
+        String mime = null;
+
         // prefer the Java util as libstorj returns always 'application/octet-stream'
-        String mime = URLConnection.guessContentTypeFromName(name);
+        try {
+            String escaped = URLEncoder.encode(name, StandardCharsets.UTF_8.toString());
+            mime = URLConnection.guessContentTypeFromName(escaped);
+        } catch (Exception e) {
+            // mime will remain null
+        }
+
         if (mime == null || mime.isEmpty()) {
             // fallback to libstorj
             mime = mimeType;
         }
+
         return mime;
     }
 
