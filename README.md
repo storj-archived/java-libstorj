@@ -15,7 +15,7 @@ For building Android applications it is recommended to use the [android-libstorj
 
 ```Gradle
 dependencies {
-    compile 'io.storj:libstorj-java:0.8.1'
+    compile 'io.storj:libstorj-java:0.8.2'
 }
 ```
 
@@ -25,6 +25,6 @@ dependencies {
 <dependency>
   <groupId>io.storj</groupId>
   <artifactId>libstorj-java</artifactId>
-  <version>0.8.1</version>
+  <version>0.8.2</version>
 </dependency>
 ```
