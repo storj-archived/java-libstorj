@@ -51,6 +51,36 @@ cache:
   - "$HOME/Library/Caches/Homebrew"
 
 before_deploy:
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    sudo apt-get install gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64;
+    cd libstorj;
+    make clean;
+    cd depends;
+    sed -i -e 's#ftp://ftp.gnutls.org#https://www.gnupg.org/ftp#g' packages/gnutls.mk;
+    sed -i -e 's#lib"#lib -D_WIN32_WINNT=0x0600 -DNCRYPT_PAD_PKCS1_FLAG=2 -DNCRYPT_SHA1_ALGORITHM=BCRYPT_SHA1_ALGORITHM -DNCRYPT_SHA256_ALGORITHM=BCRYPT_SHA256_ALGORITHM -DCERT_NCRYPT_KEY_HANDLE_TRANSFER_PROP_ID=99"#g' packages/gnutls.mk;
+    make HOST="x86_64-w64-mingw32" BUILD_DLL=1;
+    cd ..;
+    PKG_CONFIG_LIBDIR="$(pwd)/depends/build/x86_64-w64-mingw32/lib/pkgconfig" CFLAGS="-I$(pwd)/depends/build/x86_64-w64-mingw32/include -L$(pwd)/depends/build/x86_64-w64-mingw32/lib -DSTORJDLL -std=gnu11" ./configure --host=x86_64-w64-mingw32 --prefix=$(pwd)/depends/build/x86_64-w64-mingw32;
+    make;
+    cd ..;
+    wget https://github.com/ojdkbuild/ojdkbuild/releases/download/1.8.0.161-1/java-1.8.0-openjdk-1.8.0.161-1.b14.ojdkbuild.windows.x86_64.zip;
+    unzip java-1.8.0-openjdk-1.8.0.161-1.b14.ojdkbuild.windows.x86_64.zip;
+    mv java-1.8.0-openjdk-1.8.0.161-1.b14.ojdkbuild.windows.x86_64 jdk;
+    x86_64-w64-mingw32-g++ -Wall -D_JNI_IMPLEMENTATION_ -Wl,--kill-at -I./jdk/include -I./jdk/include/win32 -I./libstorj/src -I./libstorj/depends/build/x86_64-w64-mingw32/include -shared -static-libgcc -static-libstdc++ -o storj-java.dll ./src/main/cpp/storj-java.cpp -L./libstorj/src/.libs -L./libstorj/depends/build/x86_64-w64-mingw32/lib -lstorj -ljson-c -luv -lcurl -lnettle;
+    cd build/libs/jni/shared/;
+    mv ../../../../storj-java.dll .;
+    cp ../../../../libstorj/src/.libs/libstorj-2.dll .;
+    cp ../../../../libstorj/depends/build/x86_64-w64-mingw32/bin/libcurl-4.dll .;
+    cp ../../../../libstorj/depends/build/x86_64-w64-mingw32/bin/libgmp-10.dll .;
+    cp ../../../../libstorj/depends/build/x86_64-w64-mingw32/bin/libgnutls-30.dll .;
+    cp ../../../../libstorj/depends/build/x86_64-w64-mingw32/bin/libhogweed-4.dll .;
+    cp ../../../../libstorj/depends/build/x86_64-w64-mingw32/bin/libjson-c-3.dll .;
+    cp ../../../../libstorj/depends/build/x86_64-w64-mingw32/bin/libnettle-6.dll .;
+    cp ../../../../libstorj/depends/build/x86_64-w64-mingw32/bin/libuv-1.dll .;
+    cp /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll .;
+    zip java-libstorj-$TRAVIS_TAG-win64-dlls.zip *.dll;
+    cd ../../../../;
+  fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
     cd build/libs/jni/shared/;
     cp /usr/local/lib/libstorj.2.dylib .;
@@ -84,6 +114,7 @@ deploy:
     secure: BFNGvCiVL/G9yAM5b7rqlicCttonF2E84jNVG4SIfNj08DgeIP0w/v8XTwHvCP9/Frt0+1X9GM3BY1VmBLxe7I5lLOd2E7fz28p+DAZL35yLqrEYTbzwb6/mFxVyOnUM3vjIbH0/Jnf5uCXwzG8gYvhZQBDG2GMmx6C/BqDfEB3yFCG3GKwVi9BhzR7kL123pfa+ZwC2n0zh7Rmslu2uwhxJ+jxSAUofO9VWyBhSmxIc6JxJV1hxQPnwzZh4zTh5kmzVhjh8YCPABeNueL1Kzo6G+4Yp8K6FnxltsbzBruqk9kFxKes/9xwDT6Ym6HNRf+Zy0fE/s1mKiJ1N8+HamvFE8v7mUCuIn3wPNcpP2ytg0kB0auPRHcxaQwth3So9ys+yKv4P1Mg/DeyxkIiS2M02wj4lQqENsIOfNchDP/qMMQ06ePjBh5bLqy91Rcu7SQAx/uMxVMdTyv5cJAAueV0fMyrjt+feCnZvwK9/jA2xktFcyKeBLYaeaS5sX8kZjK2i1KBsDLTPlPd+R5B+xyja/FKJy8OkEGhSYWPhB6vgRRmoyvy+qTwqnegvwp8xc86dHKAZmzofE5u4Eq+suklOi0F3ejCUT/a7rzlgNVxg4+GcWeSYtDjLnp8ITo3QsACTW7SzbvZ5yIealdJMro+LWCYb7HLhkOBjYy1Gymo=
   file:
   - build/libs/libstorj-java-$TRAVIS_TAG.jar
+  - build/libs/jni/shared/java-libstorj-$TRAVIS_TAG-win64-dlls.zip
   - build/libs/jni/shared/java-libstorj-$TRAVIS_TAG-macos-dylibs.tar.gz
   on:
     repo: Storj/java-libstorj
