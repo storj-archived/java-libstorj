@@ -65,6 +65,16 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
         return -1;
     }
 
+    // increase the number of threads in libuv from the default 4 to 64,
+    // so the event loop is more responsive while transferring large files
+#ifdef _WIN32
+    if (!getenv("UV_THREADPOOL_SIZE")) {
+        _putenv_s("UV_THREADPOOL_SIZE", 64);
+    }
+#else
+    setenv("UV_THREADPOOL_SIZE", "64", 0);
+#endif
+
     return JNI_VERSION_1_6;
 }
 
