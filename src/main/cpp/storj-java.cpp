@@ -69,7 +69,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
     // so the event loop is more responsive while transferring large files
 #ifdef _WIN32
     if (!getenv("UV_THREADPOOL_SIZE")) {
-        _putenv_s("UV_THREADPOOL_SIZE", 64);
+        _putenv_s("UV_THREADPOOL_SIZE", "64");
     }
 #else
     setenv("UV_THREADPOOL_SIZE", "64", 0);
