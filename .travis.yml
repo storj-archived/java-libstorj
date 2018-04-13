@@ -117,5 +117,5 @@ deploy:
   - build/libs/jni/shared/java-libstorj-$TRAVIS_TAG-win64-dlls.zip
   - build/libs/jni/shared/java-libstorj-$TRAVIS_TAG-macos-dylibs.tar.gz
   on:
-    repo: Storj/java-libstorj
+    repo: storj/java-libstorj
     tags: true
