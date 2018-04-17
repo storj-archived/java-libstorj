@@ -79,6 +79,14 @@ before_deploy:
     cp ../../../../libstorj/depends/build/x86_64-w64-mingw32/bin/libuv-1.dll .;
     cp /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll .;
     zip java-libstorj-$TRAVIS_TAG-win64-dlls.zip *.dll;
+    cp /usr/local/lib/libstorj.so.2 .;
+    cp /usr/local/lib/libuv.so.1 .;
+    cp /usr/local/lib/libnettle.so.6 .;
+    cp /lib/x86_64-linux-gnu/libjson-c.so.2 .;
+    cp /usr/lib/x86_64-linux-gnu/libcurl-gnutls.so.4 .;
+    cp /usr/lib/x86_64-linux-gnu/librtmp.so.0 .;
+    cp /usr/lib/x86_64-linux-gnu/libgnutls.so.26 .;
+    tar -zcf java-libstorj-$TRAVIS_TAG-linux64-so.tar.gz *.so*;
     cd ../../../../;
   fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
@@ -115,6 +123,7 @@ deploy:
   file:
   - build/libs/libstorj-java-$TRAVIS_TAG.jar
   - build/libs/jni/shared/java-libstorj-$TRAVIS_TAG-win64-dlls.zip
+  - build/libs/jni/shared/java-libstorj-$TRAVIS_TAG-linux64-so.tar.gz
   - build/libs/jni/shared/java-libstorj-$TRAVIS_TAG-macos-dylibs.tar.gz
   on:
     repo: storj/java-libstorj
