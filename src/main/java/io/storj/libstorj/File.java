@@ -181,7 +181,7 @@ public class File implements Serializable, Comparable<File> {
 
         // prefer the Java util as libstorj returns always 'application/octet-stream'
         try {
-            String escaped = URLEncoder.encode(name, StandardCharsets.UTF_8.toString());
+            String escaped = URLEncoder.encode(name, StandardCharsets.UTF_8.name());
             mime = URLConnection.guessContentTypeFromName(escaped);
         } catch (Exception e) {
             // mime will remain null
