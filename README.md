@@ -19,7 +19,7 @@ The JAR can be fetched via Gradle or Maven, or downloaded from [Maven Central](h
 
 ```Gradle
 dependencies {
-    compile 'io.storj:libstorj-java:0.8.2'
+    compile 'io.storj:libstorj-java:0.8.3'
 }
 ```
 
@@ -29,7 +29,7 @@ dependencies {
 <dependency>
   <groupId>io.storj</groupId>
   <artifactId>libstorj-java</artifactId>
-  <version>0.8.2</version>
+  <version>0.8.3</version>
 </dependency>
 ```
 
