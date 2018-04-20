@@ -206,6 +206,10 @@ Java_io_storj_libstorj_Storj__1initEnv(
 
     storj_env_t *storj_env = storj_init_env(&bridge_options, &encrypt_options, &http_options, &log_options);
 
+    // create a separate event loop
+    storj_env->loop = (uv_loop_t *) malloc(sizeof(uv_loop_t));
+    uv_loop_init(storj_env->loop);
+
     if (http_options.user_agent)
         env->ReleaseStringUTFChars(userAgent, http_options.user_agent);
 
@@ -241,6 +245,12 @@ Java_io_storj_libstorj_Storj__1destroyEnv(
         jlong storjEnv)
 {
     storj_env_t *storj_env = (storj_env_t *) storjEnv;
+
+    // destroy the event loop
+    uv_loop_close(storj_env->loop);
+    free(storj_env->loop);
+
+    // destroy the rest of the storj env
     storj_destroy_env(storj_env);
 }
 
