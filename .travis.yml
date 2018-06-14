@@ -24,7 +24,8 @@ before_install:
   fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
     brew install -v libtool automake libmicrohttpd pkgconfig;
-    brew install -v curl nettle json-c libuv;
+    brew install -v curl nettle libuv;
+    brew upgrade json-c;
   fi
 
 install:
