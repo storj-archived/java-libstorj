@@ -819,7 +819,7 @@ public class Storj {
      * @return {@link #NO_ERROR} if the user and password match, and the mnemonic
      *         can decrypt the metadata; {@link #HTTP_UNAUTHORIZED} if the
      *         credentials are invalid; {@link #HTTP_FORBIDDEN} if the account has
-     *         not been activated yet; {@link #STORJ_FILE_DECRYPTION_ERROR} if the
+     *         not been activated yet; {@link #STORJ_META_DECRYPTION_ERROR} if the
      *         user and password match, but the mnemonic could not decrypt any
      *         metadata; or other error codes due to network issues.
      * @throws InterruptedException
